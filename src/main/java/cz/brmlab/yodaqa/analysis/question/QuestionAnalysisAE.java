@@ -1,5 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
+import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
 //import de.tudarmstadt.ukp.dkpro.core.berkeleyparser.BerkeleyParser;
 //import de.tudarmstadt.ukp.dkpro.core.clearnlp.ClearNlpDependencyParser;
 //import de.tudarmstadt.ukp.dkpro.core.clearnlp.ClearNlpLemmatizer;
@@ -12,10 +13,14 @@ import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolLemmatizer;
 //import de.tudarmstadt.ukp.dkpro.core.matetools.MatePosTagger;
 //import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpParser;
 //import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 //import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 //import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordPosTagger;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
+//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
+
+import de.tudarmstadt.ukp.dkpro.core.treetagger.TreeTaggerPosTagger;
 
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.fit.component.CasDumpWriter;
@@ -51,11 +56,14 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		/* Token features: */
 
 		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class));
+//		builder.add(AnalysisEngineFactory.createEngineDescription(TreeTaggerPosTagger.class, TreeTaggerPosTagger.PARAM_LANGUAGE, "en"));
+		builder.add(AnalysisEngineFactory.createEngineDescription(TreeTagger.class, TreeTagger.PARAM_LANGUAGE, "nl"));
+//		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpParser.class, TreeTaggerPosTagger.PARAM_LANGUAGE, "nl"));
 
 		/* POS, constituents, dependencies: */
-		// fast, reliable
-		builder.add(AnalysisEngineFactory.createEngineDescription(StanfordParser.class,
-					StanfordParser.PARAM_WRITE_POS, true));
+//		// fast, reliable
+//		builder.add(AnalysisEngineFactory.createEngineDescription(StanfordParser.class,
+//					StanfordParser.PARAM_WRITE_POS, true));
 
 		// slow startup, no dependencies, superseded
 		//builder.add(AnalysisEngineFactory.createEngineDescription(BerkeleyParser.class));

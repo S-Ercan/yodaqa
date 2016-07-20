@@ -12,6 +12,7 @@ import cz.brmlab.yodaqa.analysis.ansevid.AnswerEvidencingAE;
 import cz.brmlab.yodaqa.analysis.ansscore.AnswerScoringAE;
 import cz.brmlab.yodaqa.analysis.answer.AnswerAnalysisAE;
 import cz.brmlab.yodaqa.analysis.question.QuestionAnalysisAE;
+import cz.brmlab.yodaqa.analysis.question.TreeTagger;
 import cz.brmlab.yodaqa.flow.FixedParallelFlowController;
 import cz.brmlab.yodaqa.flow.asb.ParallelEngineFactory;
 import cz.brmlab.yodaqa.pipeline.solrdoc.SolrDocAnswerProducer;
@@ -54,7 +55,8 @@ public class YodaQA /* XXX: extends AggregateBuilder ? */ {
 			 * instructions on how to obtain an example one. */
 
 			//SolrNamedSource.register("guten", "data/guten", null);
-			SolrNamedSource.register("enwiki", "collection1", "http://enwiki.ailao.eu:8983/solr/");
+//			SolrNamedSource.register("enwiki", "collection1", "http://enwiki.ailao.eu:8983/solr/");
+			SolrNamedSource.register("nlwiki", "collection1", "http://localhost:8983/solr/nlwiki/");
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("*** Exception caught during SolrNamedSource initialization. ***");
@@ -67,6 +69,7 @@ public class YodaQA /* XXX: extends AggregateBuilder ? */ {
 		System.setProperty("dkpro.core.resourceprovider.sharable." + StanfordParser.class.getName(), "true");
 		System.setProperty("dkpro.core.resourceprovider.sharable." + StanfordPosTagger.class.getName(), "true");
 		System.setProperty("dkpro.core.resourceprovider.sharable." + OpenNlpNameFinder.class.getName(), "true");
+		System.setProperty("dkpro.core.resourceprovider.sharable." + TreeTagger.class.getName(), "true");
 	}
 
 	public static AnalysisEngineDescription createEngineDescription() throws ResourceInitializationException {

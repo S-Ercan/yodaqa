@@ -99,6 +99,8 @@ public class SVGenerator extends JCasAnnotator_ImplBase {
 
 	protected Token getFirstVerb(Constituent sentence) {
 		for (Token v : JCasUtil.selectCovered(Token.class, sentence)) {
+			System.out.println("Token: " + v);
+			System.out.println("POS: " + v.getPos());
 			if (!v.getPos().getPosValue().matches("^V.*"))
 				continue;
 			if (isAux(v))
