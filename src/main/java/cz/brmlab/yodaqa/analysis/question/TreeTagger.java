@@ -277,44 +277,63 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 					System.out.println("token! " + aToken);
 					synchronized (cas) {
 						Token token = strToTokMap.get(aToken);
-						// Add the Part of Speech
-						if (writePos && aPos != null) {
-							// Type posTag =
-							// posMappingProvider.getTagType(aPos);
-							String posStr = getTagType(aPos);
-							Type posTag = jCas.getTypeSystem().getType(posStr);
-							POS posAnno = (POS) cas.createAnnotation(posTag, token.getBegin(), token.getEnd());
-							posAnno.setPosValue(internTags ? aPos.intern() : aPos);
-							// posAnno.setCoarseValue(posAnno.getClass().equals(POS.class)
-							// ? null
-							// : posAnno.getType().getShortName().intern());
-							token.setPos(posAnno);
-							pos[count.get()] = posAnno;
+						if (token.getPos() == null) {
+							POS pos = new POS(jCas);
+							pos.setBegin(token.getBegin());
+							pos.setEnd(token.getEnd());
+							pos.addToIndexes();
+							token.setPos(pos);
 						}
+						token.getPos().setPosValue(internTags ? aPos.intern() : aPos);
 
-						// Add the lemma
-						if (writeLemma && aLemma != null) {
-							Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
-							lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
-							token.setLemma(lemmaAnno);
-							lemma[count.get()] = lemmaAnno;
+						if (token.getLemma() == null) {
+							Lemma lemma = new Lemma(jCas);
+							lemma.setBegin(token.getBegin());
+							lemma.setEnd(token.getEnd());
+							lemma.addToIndexes();
+							token.setLemma(lemma);
 						}
+						token.getLemma().setValue(internTags ? aLemma.intern() : aPos);
+
+//						// Add the Part of Speech
+//						if (writePos && aPos != null) {
+//							// Type posTag =
+//							// posMappingProvider.getTagType(aPos);
+//							String posStr = getTagType(aPos);
+//							Type posTag = jCas.getTypeSystem().getType(posStr);
+////							POS posAnno = (POS) cas.createAnnotation(posTag, token.getBegin(), token.getEnd());
+//							POS posAnno = new POS(jCas, token.getBegin(), token.getEnd());
+//							posAnno.setPosValue(internTags ? aPos.intern() : aPos);
+//							// posAnno.setCoarseValue(posAnno.getClass().equals(POS.class)
+//							// ? null
+//							// : posAnno.getType().getShortName().intern());
+//							token.setPos(posAnno);
+//							pos[count.get()] = posAnno;
+//						}
+//
+//						// Add the lemma
+//						if (writeLemma && aLemma != null) {
+//							Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
+//							lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
+//							token.setLemma(lemmaAnno);
+//							lemma[count.get()] = lemmaAnno;
+//						}
 
 						count.getAndIncrement();
 					}
 				}
 			});
-			for (Sentence sentence : select(jCas, Sentence.class)) {
-				/* List<Token> */tokens = selectCovered(jCas, Token.class, sentence);
-
-				Parse parseInput = new Parse(cas.getDocumentText(), new Span(sentence.getBegin(), sentence.getEnd()),
-						AbstractBottomUpParser.INC_NODE, 0, 0);
-				int i = 0;
-				for (Token t : tokens) {
-					parseInput.insert(new Parse(cas.getDocumentText(), new Span(t.getBegin(), t.getEnd()),
-							AbstractBottomUpParser.TOK_NODE, 0, i));
-					i++;
-				}
+//			for (Sentence sentence : select(jCas, Sentence.class)) {
+//				/* List<Token> */tokens = selectCovered(jCas, Token.class, sentence);
+//
+//				Parse parseInput = new Parse(cas.getDocumentText(), new Span(sentence.getBegin(), sentence.getEnd()),
+//						AbstractBottomUpParser.INC_NODE, 0, 0);
+//				int i = 0;
+//				for (Token t : tokens) {
+//					parseInput.insert(new Parse(cas.getDocumentText(), new Span(t.getBegin(), t.getEnd()),
+//							AbstractBottomUpParser.TOK_NODE, 0, i));
+//					i++;
+//				}
 
 				// Parse parseOutput =
 				// modelProvider.getResource().parse(parseInput);
@@ -336,32 +355,36 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 //					totalStrLen += strLen;
 //					i++;
 //				}
-				Parse parseOutput = parseInput;
+//				Parse parseOutput = parseInput;
 
 //				createConstituentAnnotationFromTree(jCas, parseOutput, null, tokens);
-				createConstituentAnnotationFromTree(jCas, parseInput, null, tokens);
+//				createConstituentAnnotationFromTree(jCas, parseInput, null, tokens);
 
-				if (/* createPennTreeString */false) {
-					StringBuffer sb = new StringBuffer();
-					parseOutput.setType("ROOT"); // in DKPro the root is ROOT,
-													// not TOP
-					parseOutput.show(sb);
-
-					PennTree pTree = new PennTree(jCas, sentence.getBegin(), sentence.getEnd());
-					pTree.setPennTree(sb.toString());
-					pTree.addToIndexes();
-				}
-			}
+//				if (/* createPennTreeString */false) {
+//					StringBuffer sb = new StringBuffer();
+//					parseOutput.setType("ROOT"); // in DKPro the root is ROOT,
+//													// not TOP
+//					parseOutput.show(sb);
+//
+//					PennTree pTree = new PennTree(jCas, sentence.getBegin(), sentence.getEnd());
+//					pTree.setPennTree(sb.toString());
+//					pTree.addToIndexes();
+//				}
+//			}
 			tt.process(strings);
 
 			// Add the annotations to the indexes
-			for (int i = 0; i < count.get(); i++) {
-				if (pos[i] != null) {
-					pos[i].addToIndexes();
-				}
-				if (lemma[i] != null) {
-					lemma[i].addToIndexes();
-				}
+//			for (int i = 0; i < count.get(); i++) {
+//				if (pos[i] != null) {
+//					pos[i].addToIndexes();
+//				}
+//				if (lemma[i] != null) {
+//					lemma[i].addToIndexes();
+//				}
+//			}
+			if (jCas.getDocumentText() != null) {
+				ROOT r = new ROOT(jCas, 0, jCas.getDocumentText().length());
+				r.addToIndexes();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

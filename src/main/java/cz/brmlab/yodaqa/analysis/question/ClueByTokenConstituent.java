@@ -50,40 +50,46 @@ public class ClueByTokenConstituent extends JCasAnnotator_ImplBase {
 		 * (And then the individual tokens too.) */
 
 		/* This is a DFS over the Constituent tree. */
-		LinkedList<Constituent> lifo = new LinkedList<Constituent>();
-		for (ROOT sentence : JCasUtil.select(jcas, ROOT.class))
-			lifo.add(sentence);
-		while (!lifo.isEmpty()) {
-			Constituent c = lifo.poll();
-			if (c.getConstituentType().matches(CONSTITMATCH)) {
-				/* Sometimes, we get an absurd NP like "it".
-				 * Guard against that. */
-				boolean absurd = true;
-				for (Token t : JCasUtil.selectCovered(Token.class, c)) {
-					if (t.getPos().getPosValue().matches(TOKENMATCH)) {
-						absurd = false;
-						break;
-					}
-				}
-				if (absurd)
-					continue;
-
-				/* <1.0 so that we slightly prefer tokens,
-				 * usable even for fulltext search, when
-				 * merging clues. */
-				addClue(new CluePhrase(jcas), c.getBegin(), c.getEnd(), c, false, 0.99);
-			}
-
-			for (FeatureStructure child : c.getChildren().toArray()) {
-				if (!(child instanceof Constituent)) {
-					Token t = (Token) child;
-					if (t.getPos().getPosValue().matches(TOKENMATCH))
-						addClue(new ClueToken(jcas), t.getBegin(), t.getEnd(), t, true, 1.0);
-					continue;
-				}
-				lifo.add((Constituent) child);
+		for (Token t : JCasUtil.select(jcas, Token.class)) {
+			if (t.getPos().getPosValue().matches(TOKENMATCH)) {
+				if (t.getEnd() - t.getBegin() > 1) // skip one-letter things like interpunction
+					addClue(new ClueToken(jcas), t.getBegin(), t.getEnd(), t, true, 1.0);
 			}
 		}
+//		LinkedList<Constituent> lifo = new LinkedList<Constituent>();
+//		for (ROOT sentence : JCasUtil.select(jcas, ROOT.class))
+//			lifo.add(sentence);
+//		while (!lifo.isEmpty()) {
+//			Constituent c = lifo.poll();
+//			if (c.getConstituentType().matches(CONSTITMATCH)) {
+//				/* Sometimes, we get an absurd NP like "it".
+//				 * Guard against that. */
+//				boolean absurd = true;
+//				for (Token t : JCasUtil.selectCovered(Token.class, c)) {
+//					if (t.getPos().getPosValue().matches(TOKENMATCH)) {
+//						absurd = false;
+//						break;
+//					}
+//				}
+//				if (absurd)
+//					continue;
+//
+//				/* <1.0 so that we slightly prefer tokens,
+//				 * usable even for fulltext search, when
+//				 * merging clues. */
+//				addClue(new CluePhrase(jcas), c.getBegin(), c.getEnd(), c, false, 0.99);
+//			}
+//
+//			for (FeatureStructure child : c.getChildren().toArray()) {
+//				if (!(child instanceof Constituent)) {
+//					Token t = (Token) child;
+//					if (t.getPos().getPosValue().matches(TOKENMATCH))
+//						addClue(new ClueToken(jcas), t.getBegin(), t.getEnd(), t, true, 1.0);
+//					continue;
+//				}
+//				lifo.add((Constituent) child);
+//			}
+//		}
 	}
 
 	protected void addClue(Clue clue, int begin, int end, Annotation base, boolean isReliable, double weight) {
