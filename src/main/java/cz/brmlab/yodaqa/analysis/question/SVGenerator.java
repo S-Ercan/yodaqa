@@ -101,6 +101,10 @@ public class SVGenerator extends JCasAnnotator_ImplBase {
 		for (Token v : JCasUtil.selectCovered(Token.class, sentence)) {
 			System.out.println("Token: " + v);
 			System.out.println("POS: " + v.getPos());
+			if(v.getPos().getPosValue() == null) {
+				System.out.println("No POS value found for token: " + v.getCoveredText());
+				continue;
+			}
 			if (!v.getPos().getPosValue().matches("^V.*"))
 				continue;
 			if (isAux(v))
