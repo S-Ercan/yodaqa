@@ -1,15 +1,21 @@
 package cz.brmlab.yodaqa.analysis.question;
 
+import static org.apache.uima.util.Level.INFO;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.annolab.tt4j.TokenAdapter;
 import org.annolab.tt4j.TokenHandler;
 import org.annolab.tt4j.TreeTaggerException;
+import org.annolab.tt4j.TreeTaggerModelUtil;
 import org.annolab.tt4j.TreeTaggerWrapper;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -33,34 +39,20 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PR;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PUNC;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.V;
+import de.tudarmstadt.ukp.dkpro.core.api.metadata.SingletonTagset;
 import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
 import de.tudarmstadt.ukp.dkpro.core.api.resources.CasConfigurableProviderBase;
 import de.tudarmstadt.ukp.dkpro.core.api.resources.MappingProvider;
 import de.tudarmstadt.ukp.dkpro.core.api.resources.MappingProviderFactory;
 import de.tudarmstadt.ukp.dkpro.core.api.resources.ModelProviderBase;
+import de.tudarmstadt.ukp.dkpro.core.api.resources.ResourceUtils;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.PennTree;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import de.tudarmstadt.ukp.dkpro.core.treetagger.internal.DKProExecutableResolver;
-import edu.stanford.nlp.ling.Word;
 import opennlp.tools.parser.AbstractBottomUpParser;
 import opennlp.tools.parser.Parse;
-import opennlp.tools.util.Span;
-
-import static java.util.Arrays.asList;
-import static org.apache.uima.fit.util.JCasUtil.select;
-import static org.apache.uima.fit.util.JCasUtil.selectCovered;
-import static org.apache.uima.util.Level.INFO;
-import java.net.URL;
-import java.util.Properties;
-
-import org.annolab.tt4j.TokenAdapter;
-import org.annolab.tt4j.TreeTaggerModelUtil;
-import de.tudarmstadt.ukp.dkpro.core.api.metadata.SingletonTagset;
-import de.tudarmstadt.ukp.dkpro.core.api.resources.ResourceUtils;
 
 /**
  * Part-of-Speech and lemmatizer annotator using TreeTagger.
@@ -277,23 +269,42 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 					System.out.println("token! " + aToken);
 					synchronized (cas) {
 						Token token = strToTokMap.get(aToken);
-						if (token.getPos() == null) {
-							POS pos = new POS(jCas);
-							pos.setBegin(token.getBegin());
-							pos.setEnd(token.getEnd());
-							pos.addToIndexes();
-							token.setPos(pos);
+						if (aPos != null) {
+							String posStr = getTagType(aPos);
+							Type posTag = jCas.getTypeSystem().getType(posStr);
+                            POS posAnno = (POS) cas.createAnnotation(posTag, token.getBegin(),
+                            		token.getEnd());
+//                            posAnno.setPosValue(internTags ? aPos.intern() : aPos);
+                            posAnno.setPosValue(internTags ? posTag.toString().intern() : posTag.toString());
+                            String posValue = posTag.getName();
+                            posAnno.setPosValue(posValue.substring(posValue.lastIndexOf(".") + 1, posValue.length()));
+//                            posAnno.setCoarseValue(posAnno.getClass().equals(POS.class) ? null
+//                                    : posAnno.getType().getShortName().intern());
+                            token.setPos(posAnno);
+                            pos[count.get()] = posAnno;
+//							POS pos = new POS(jCas);
+//							pos.setBegin(token.getBegin());
+//							pos.setEnd(token.getEnd());
+//							pos.addToIndexes();
+//							token.setPos(pos);
 						}
-						token.getPos().setPosValue(internTags ? aPos.intern() : aPos);
 
-						if (token.getLemma() == null) {
-							Lemma lemma = new Lemma(jCas);
-							lemma.setBegin(token.getBegin());
-							lemma.setEnd(token.getEnd());
-							lemma.addToIndexes();
-							token.setLemma(lemma);
+//						String posStr = getTagType(aPos);
+//						Type posTag = jCas.getTypeSystem().getType(posStr);
+//						token.getPos().setPosValue(internTags ? aPos.intern() : aPos);
+
+						if (aLemma != null) {
+//							Lemma lemma = new Lemma(jCas);
+//							lemma.setBegin(token.getBegin());
+//							lemma.setEnd(token.getEnd());
+//							lemma.addToIndexes();
+//							token.setLemma(lemma);
+							Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
+                            lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
+                            token.setLemma(lemmaAnno);
+                            lemma[count.get()] = lemmaAnno;
 						}
-						token.getLemma().setValue(internTags ? aLemma.intern() : aPos);
+//						token.getLemma().setValue(internTags ? aLemma.intern() : aPos);
 
 //						// Add the Part of Speech
 //						if (writePos && aPos != null) {
