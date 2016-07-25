@@ -30,7 +30,9 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ADV;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ART;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.CARD;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PR;
@@ -46,6 +48,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.resources.ResourceUtils;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.NUM;
 import de.tudarmstadt.ukp.dkpro.core.treetagger.internal.DKProExecutableResolver;
 
 /**
@@ -301,8 +304,12 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 	private String getTagType(String aPos) {
 		Map<String, String> posToTag = new HashMap<String, String>();
 		posToTag.put("ROOT", ROOT.class.getName());
+		posToTag.put("adv", ADV.class.getName());
+		posToTag.put("num__card", CARD.class.getName());
 		posToTag.put("pronquest", PR.class.getName());
+		posToTag.put("pronpers", PR.class.getName());
 		posToTag.put("verbpressg", V.class.getName());
+		posToTag.put("verbinf", V.class.getName());
 		posToTag.put("det__art", ART.class.getName());
 		posToTag.put("nounsg", N.class.getName());
 		posToTag.put("$.", PUNC.class.getName());
