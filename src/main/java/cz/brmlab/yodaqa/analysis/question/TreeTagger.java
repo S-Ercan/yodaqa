@@ -24,11 +24,8 @@ import org.apache.uima.cas.Type;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.TypeCapability;
-import org.apache.uima.fit.util.FSCollectionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.cas.FSArray;
-import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +45,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.resources.ModelProviderBase;
 import de.tudarmstadt.ukp.dkpro.core.api.resources.ResourceUtils;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import de.tudarmstadt.ukp.dkpro.core.treetagger.internal.DKProExecutableResolver;
-import opennlp.tools.parser.AbstractBottomUpParser;
-import opennlp.tools.parser.Parse;
 
 /**
  * Part-of-Speech and lemmatizer annotator using TreeTagger.
@@ -181,12 +175,10 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 				setDefaultVariantsLocation(
 						"classpath:/de/tudarmstadt/ukp/dkpro/core/api/lexmorph/tagset/nl-tt-pos.map");
 				setDefault(VARIANT, "le"); // le = little-endian
-				setDefault(SHARABLE, "true");
 
 				setOverride(LOCATION, modelLocation);
 				setOverride(LANGUAGE, language);
 				setOverride(VARIANT, variant);
-				setOverride(SHARABLE, "true");
 
 				treetagger = new TreeTaggerWrapper<Token>();
 				treetagger.setPerformanceMode(performanceMode);
@@ -230,7 +222,6 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		};
 
 		posMappingLocation = "classpath:/de/tudarmstadt/ukp/dkpro/core/api/lexmorph/tagset/nl-tt-pos.map";
-		System.out.println(posMappingLocation + ", " + language + ", " + modelProvider);
 		posMappingProvider = MappingProviderFactory.createPosMappingProvider(posMappingLocation, language,
 				modelProvider);
 		posMappingProvider.setDefault(MappingProvider.SHARABLE, "true");
@@ -266,133 +257,36 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 			tt.setHandler(new TokenHandler<String>() {
 				@Override
 				public void token(String aToken, String aPos, String aLemma) {
-					System.out.println("token! " + aToken);
 					synchronized (cas) {
 						Token token = strToTokMap.get(aToken);
 						if (aPos != null) {
 							String posStr = getTagType(aPos);
 							Type posTag = jCas.getTypeSystem().getType(posStr);
-                            POS posAnno = (POS) cas.createAnnotation(posTag, token.getBegin(),
-                            		token.getEnd());
-//                            posAnno.setPosValue(internTags ? aPos.intern() : aPos);
-                            posAnno.setPosValue(internTags ? posTag.toString().intern() : posTag.toString());
-                            String posValue = posTag.getName();
-                            posAnno.setPosValue(posValue.substring(posValue.lastIndexOf(".") + 1, posValue.length()));
-//                            posAnno.setCoarseValue(posAnno.getClass().equals(POS.class) ? null
-//                                    : posAnno.getType().getShortName().intern());
-                            token.setPos(posAnno);
-                            pos[count.get()] = posAnno;
-//							POS pos = new POS(jCas);
-//							pos.setBegin(token.getBegin());
-//							pos.setEnd(token.getEnd());
-//							pos.addToIndexes();
-//							token.setPos(pos);
+							POS posAnno = (POS) cas.createAnnotation(posTag, token.getBegin(), token.getEnd());
+							posAnno.setPosValue(internTags ? posTag.toString().intern() : posTag.toString());
+							String posValue = posTag.getName();
+							posAnno.setPosValue(posValue.substring(posValue.lastIndexOf(".") + 1, posValue.length()));
+							// posAnno.setCoarseValue(posAnno.getClass().equals(POS.class)
+							// ? null
+							// : posAnno.getType().getShortName().intern());
+							token.setPos(posAnno);
+							pos[count.get()] = posAnno;
 						}
-
-//						String posStr = getTagType(aPos);
-//						Type posTag = jCas.getTypeSystem().getType(posStr);
-//						token.getPos().setPosValue(internTags ? aPos.intern() : aPos);
 
 						if (aLemma != null) {
-//							Lemma lemma = new Lemma(jCas);
-//							lemma.setBegin(token.getBegin());
-//							lemma.setEnd(token.getEnd());
-//							lemma.addToIndexes();
-//							token.setLemma(lemma);
 							Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
-                            lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
-                            token.setLemma(lemmaAnno);
-                            lemma[count.get()] = lemmaAnno;
+							lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
+							token.setLemma(lemmaAnno);
+							lemma[count.get()] = lemmaAnno;
 						}
-//						token.getLemma().setValue(internTags ? aLemma.intern() : aPos);
-
-//						// Add the Part of Speech
-//						if (writePos && aPos != null) {
-//							// Type posTag =
-//							// posMappingProvider.getTagType(aPos);
-//							String posStr = getTagType(aPos);
-//							Type posTag = jCas.getTypeSystem().getType(posStr);
-////							POS posAnno = (POS) cas.createAnnotation(posTag, token.getBegin(), token.getEnd());
-//							POS posAnno = new POS(jCas, token.getBegin(), token.getEnd());
-//							posAnno.setPosValue(internTags ? aPos.intern() : aPos);
-//							// posAnno.setCoarseValue(posAnno.getClass().equals(POS.class)
-//							// ? null
-//							// : posAnno.getType().getShortName().intern());
-//							token.setPos(posAnno);
-//							pos[count.get()] = posAnno;
-//						}
-//
-//						// Add the lemma
-//						if (writeLemma && aLemma != null) {
-//							Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
-//							lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
-//							token.setLemma(lemmaAnno);
-//							lemma[count.get()] = lemmaAnno;
-//						}
 
 						count.getAndIncrement();
 					}
 				}
 			});
-//			for (Sentence sentence : select(jCas, Sentence.class)) {
-//				/* List<Token> */tokens = selectCovered(jCas, Token.class, sentence);
-//
-//				Parse parseInput = new Parse(cas.getDocumentText(), new Span(sentence.getBegin(), sentence.getEnd()),
-//						AbstractBottomUpParser.INC_NODE, 0, 0);
-//				int i = 0;
-//				for (Token t : tokens) {
-//					parseInput.insert(new Parse(cas.getDocumentText(), new Span(t.getBegin(), t.getEnd()),
-//							AbstractBottomUpParser.TOK_NODE, 0, i));
-//					i++;
-//				}
 
-				// Parse parseOutput =
-				// modelProvider.getResource().parse(parseInput);
-//				Parse parseOutput = new Parse("what is a robot?", new Span(0, 16, null), "TOP", 1.0, 0);
-//				List<String> strs = new ArrayList<String>();
-//				strs.add("what");
-//				strs.add("is");
-//				strs.add("a");
-//				strs.add("robot");
-//				strs.add("?");
-//				int strLen = 0;
-//				int totalStrLen = 0;
-//				i = 0;
-//				for (String str : strs) {
-//					strLen = str.length();
-//					Parse prs = new Parse(str, new Span(totalStrLen, totalStrLen + strLen, null),
-//							"AbstractBottomUpParser.TOK_NODE", 1.0, i);
-//					parseOutput.insert(prs);
-//					totalStrLen += strLen;
-//					i++;
-//				}
-//				Parse parseOutput = parseInput;
-
-//				createConstituentAnnotationFromTree(jCas, parseOutput, null, tokens);
-//				createConstituentAnnotationFromTree(jCas, parseInput, null, tokens);
-
-//				if (/* createPennTreeString */false) {
-//					StringBuffer sb = new StringBuffer();
-//					parseOutput.setType("ROOT"); // in DKPro the root is ROOT,
-//													// not TOP
-//					parseOutput.show(sb);
-//
-//					PennTree pTree = new PennTree(jCas, sentence.getBegin(), sentence.getEnd());
-//					pTree.setPennTree(sb.toString());
-//					pTree.addToIndexes();
-//				}
-//			}
 			tt.process(strings);
 
-			// Add the annotations to the indexes
-//			for (int i = 0; i < count.get(); i++) {
-//				if (pos[i] != null) {
-//					pos[i].addToIndexes();
-//				}
-//				if (lemma[i] != null) {
-//					lemma[i].addToIndexes();
-//				}
-//			}
 			if (jCas.getDocumentText() != null) {
 				ROOT r = new ROOT(jCas, 0, jCas.getDocumentText().length());
 				r.addToIndexes();
@@ -402,80 +296,6 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		} catch (TreeTaggerException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private Annotation createConstituentAnnotationFromTree(JCas aJCas, Parse aNode, Annotation aParentFS,
-			List<Token> aTokens) {
-		// If the node is a word-level constituent node (== POS):
-		// create parent link on token and (if not turned off) create POS tag
-		if (aNode.isPosTag()) {
-			Token token = getToken(aTokens, aNode.getSpan().getStart(), aNode.getSpan().getEnd());
-
-			// link token to its parent constituent
-			if (aParentFS != null) {
-				token.setParent(aParentFS);
-			}
-
-			// only add POS to index if we want POS-tagging
-			if (/* createPosTags */true) {
-				Type posTag = posMappingProvider.getTagType(aNode.getType());
-				POS posAnno = (POS) aJCas.getCas().createAnnotation(posTag, token.getBegin(), token.getEnd());
-				posAnno.setPosValue(internTags ? aNode.getType().intern() : aNode.getType());
-				posAnno.addToIndexes();
-				token.setPos(posAnno);
-			}
-
-			return token;
-		}
-		// Check if node is a constituent node on sentence or phrase-level
-		else {
-			String typeName = aNode.getType();
-			if (AbstractBottomUpParser.TOP_NODE.equals(typeName)) {
-				typeName = "ROOT"; // in DKPro the root is ROOT, not TOP
-			}
-
-			// create the necessary objects and methods
-			String posStr = getTagType(typeName);
-			// Type constType = constituentMappingProvider.getTagType(typeName);
-			Type constType = aJCas.getTypeSystem().getType(posStr);
-
-			Constituent constAnno = (Constituent) aJCas.getCas().createAnnotation(constType, aNode.getSpan().getStart(),
-					aNode.getSpan().getEnd());
-			constAnno.setConstituentType(typeName);
-
-			// link to parent
-			if (aParentFS != null) {
-				constAnno.setParent(aParentFS);
-			}
-
-			// Do we have any children?
-			List<Annotation> childAnnotations = new ArrayList<Annotation>();
-			for (Parse child : aNode.getChildren()) {
-				Annotation childAnnotation = createConstituentAnnotationFromTree(aJCas, child, constAnno, aTokens);
-				if (childAnnotation != null) {
-					childAnnotations.add(childAnnotation);
-				}
-			}
-
-			// Now that we know how many children we have, link annotation of
-			// current node with its children
-			FSArray childArray = FSCollectionFactory.createFSArray(aJCas, childAnnotations);
-			constAnno.setChildren(childArray);
-
-			// write annotation for current node to index
-			aJCas.addFsToIndexes(constAnno);
-
-			return constAnno;
-		}
-	}
-
-	private Token getToken(List<Token> aTokens, int aBegin, int aEnd) {
-		for (Token t : aTokens) {
-			if (aBegin == t.getBegin() && aEnd == t.getEnd()) {
-				return t;
-			}
-		}
-		throw new IllegalStateException("Token not found");
 	}
 
 	private String getTagType(String aPos) {
