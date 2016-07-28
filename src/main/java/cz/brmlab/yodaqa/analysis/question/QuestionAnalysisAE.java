@@ -1,27 +1,5 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
-//import de.tudarmstadt.ukp.dkpro.core.berkeleyparser.BerkeleyParser;
-//import de.tudarmstadt.ukp.dkpro.core.clearnlp.ClearNlpDependencyParser;
-//import de.tudarmstadt.ukp.dkpro.core.clearnlp.ClearNlpLemmatizer;
-//import de.tudarmstadt.ukp.dkpro.core.clearnlp.ClearNlpPosTagger;
-//import de.tudarmstadt.ukp.dkpro.core.clearnlp.ClearNlpSemanticRoleLabeler;
-import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolLemmatizer;
-//import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
-//import de.tudarmstadt.ukp.dkpro.core.matetools.MateLemmatizer;
-//import de.tudarmstadt.ukp.dkpro.core.matetools.MateParser;
-//import de.tudarmstadt.ukp.dkpro.core.matetools.MatePosTagger;
-//import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
-import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
-import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpParser;
-//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
-//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
-//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordPosTagger;
-//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
-
-import de.tudarmstadt.ukp.dkpro.core.treetagger.TreeTaggerPosTagger;
-
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.fit.component.CasDumpWriter;
 import org.apache.uima.fit.factory.AggregateBuilder;
@@ -32,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.analysis.tycor.LATByWordnet;
 import cz.brmlab.yodaqa.io.debug.DumpConstituents;
-import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 
 /**
  * Annotate the QuestionCAS.
@@ -62,8 +40,8 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class));
 		// builder.add(AnalysisEngineFactory.createEngineDescription(TreeTaggerPosTagger.class,
 		// TreeTaggerPosTagger.PARAM_LANGUAGE, "en"));
-		 builder.add(AnalysisEngineFactory.createEngineDescription(TreeTagger.class,
-		 TreeTagger.PARAM_LANGUAGE, "nl"));
+		 builder.add(AnalysisEngineFactory.createEngineDescription(TreeTagger.class));
+//		 ,TreeTagger.PARAM_LANGUAGE, "nl"));
 //		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpParser.class,
 //				OpenNlpParser.PARAM_MODEL_LOCATION, "/home/selman/Software/Git/QA/yodaqa/lib/parser-nl-chunking.bin",
 //				OpenNlpParser.PARAM_LANGUAGE, "en"));

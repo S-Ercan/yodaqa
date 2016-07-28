@@ -48,7 +48,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.resources.ResourceUtils;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.NUM;
 import de.tudarmstadt.ukp.dkpro.core.treetagger.internal.DKProExecutableResolver;
 
 /**
@@ -227,8 +226,6 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		posMappingLocation = "classpath:/de/tudarmstadt/ukp/dkpro/core/api/lexmorph/tagset/nl-tt-pos.map";
 		posMappingProvider = MappingProviderFactory.createPosMappingProvider(posMappingLocation, language,
 				modelProvider);
-		posMappingProvider.setDefault(MappingProvider.SHARABLE, "true");
-		posMappingProvider.setOverride(MappingProvider.SHARABLE, "true");
 		System.setProperty("treetagger.home", "/home/selman/Software/Libraries/tree-tagger/");
 	}
 

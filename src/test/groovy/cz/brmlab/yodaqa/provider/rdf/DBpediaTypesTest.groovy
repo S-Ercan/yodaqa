@@ -5,7 +5,7 @@ import org.junit.Test;
  /**
  *
  */
-class DBpediaTypesTest extends GroovyTestCase {
+/*class DBpediaTypesTest extends GroovyTestCase {
 
     @Test void testQueryTitleForm() {
         DBpediaTypes dbt = new DBpediaTypes();
@@ -17,4 +17,4 @@ class DBpediaTypesTest extends GroovyTestCase {
         List<String> resultForSnezkaCached = dbt.query("Sněžka", null); //Cached version should be the same
         assertArrayEquals(expectedResult.toArray(), resultForSnezkaCached.toArray());
      }
-}
+}*/
