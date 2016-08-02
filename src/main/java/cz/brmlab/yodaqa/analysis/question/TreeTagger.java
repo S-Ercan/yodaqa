@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -30,11 +31,13 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ADJ;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ADV;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ART;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.CARD;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PP;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PR;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PUNC;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.V;
@@ -238,11 +241,14 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		List<Token> tokens = new ArrayList<>(JCasUtil.select(jCas, Token.class));
 
 		List<String> strings = new ArrayList<String>();
-		Map<String, Token> strToTokMap = new HashMap<String, Token>();
+		Map<String, LinkedList<Token>> strToTokMap = new HashMap<String, LinkedList<Token>>();
 		for (Token token : tokens) {
 			String tokenText = token.getCoveredText();
 			strings.add(tokenText);
-			strToTokMap.put(tokenText, token);
+			if (!strToTokMap.containsKey(tokenText)) {
+				strToTokMap.put(tokenText, new LinkedList<Token>());
+			}
+			strToTokMap.get(tokenText).add(token);
 		}
 
 		TreeTaggerWrapper<String> tt = new TreeTaggerWrapper<String>();
@@ -258,7 +264,7 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 				@Override
 				public void token(String aToken, String aPos, String aLemma) {
 					synchronized (cas) {
-						Token token = strToTokMap.get(aToken);
+						Token token = strToTokMap.get(aToken).removeFirst();
 						if (aPos != null) {
 							String posStr = getTagType(aPos);
 							Type posTag = jCas.getTypeSystem().getType(posStr);
@@ -301,14 +307,35 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 	private String getTagType(String aPos) {
 		Map<String, String> posToTag = new HashMap<String, String>();
 		posToTag.put("ROOT", ROOT.class.getName());
+		posToTag.put("adj", ADJ.class.getName());
+		posToTag.put("adj*kop", ADJ.class.getName());
+		posToTag.put("adjabbr", ADJ.class.getName());
 		posToTag.put("adv", ADV.class.getName());
 		posToTag.put("num__card", CARD.class.getName());
+		posToTag.put("pronadv", ADV.class.getName());
 		posToTag.put("pronquest", PR.class.getName());
 		posToTag.put("pronpers", PR.class.getName());
-		posToTag.put("verbpressg", V.class.getName());
-		posToTag.put("verbinf", V.class.getName());
+		posToTag.put("pronrel", PR.class.getName());
 		posToTag.put("det__art", ART.class.getName());
+		posToTag.put("det__demo", PR.class.getName());
+		posToTag.put("det__indef", PR.class.getName());
+		posToTag.put("det__poss", PR.class.getName());
+		posToTag.put("det__quest", PR.class.getName());
+		posToTag.put("det__rel", PR.class.getName());
+		posToTag.put("prep", PP.class.getName());
+		posToTag.put("prep_abbr", PP.class.getName());
 		posToTag.put("nounsg", N.class.getName());
+		// Not sure - nounprop is 'proper name'...
+		posToTag.put("nounprop", N.class.getName());
+
+		posToTag.put("verbinf", V.class.getName());
+		posToTag.put("verbpapa", V.class.getName());
+		posToTag.put("verbpastpl", V.class.getName());
+		posToTag.put("verbpastsg", V.class.getName());
+		posToTag.put("verbpresp", V.class.getName());
+		posToTag.put("verbprespl", V.class.getName());
+		posToTag.put("verbpressg", V.class.getName());
+
 		posToTag.put("$.", PUNC.class.getName());
 
 		return posToTag.get(aPos);

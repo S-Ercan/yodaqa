@@ -14,7 +14,7 @@ import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
 
 import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolLemmatizer;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
+//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 
 /**
  * From the QuestionCAS, generate a bunch of CandidateAnswerCAS instances.
@@ -49,11 +49,11 @@ public class StructuredAnswerProducer /* XXX: extends AggregateBuilder ? */ {
 		 * here (esp. wrt. named entities). */
 
 		/* POS, constituents, dependencies: */
-		builder.add(AnalysisEngineFactory.createEngineDescription(
-				StanfordParser.class,
-				StanfordParser.PARAM_MAX_TOKENS, 50, // more takes a lot of RAM and is sloow, StanfordParser is O(N^2)
-				StanfordParser.PARAM_WRITE_POS, true),
-			CAS.NAME_DEFAULT_SOFA, "Answer");
+//		builder.add(AnalysisEngineFactory.createEngineDescription(
+//				StanfordParser.class,
+//				StanfordParser.PARAM_MAX_TOKENS, 50, // more takes a lot of RAM and is sloow, StanfordParser is O(N^2)
+//				StanfordParser.PARAM_WRITE_POS, true),
+//			CAS.NAME_DEFAULT_SOFA, "Answer");
 
 		/* Lemma features: */
 		builder.add(AnalysisEngineFactory.createEngineDescription(LanguageToolLemmatizer.class),
