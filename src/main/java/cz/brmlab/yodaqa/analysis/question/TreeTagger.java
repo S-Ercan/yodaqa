@@ -35,6 +35,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ADJ;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ADV;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.ART;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.CARD;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.CONJ;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.PP;
@@ -327,6 +328,9 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		posToTag.put("nounsg", N.class.getName());
 		// Not sure - nounprop is 'proper name'...
 		posToTag.put("nounprop", N.class.getName());
+
+		posToTag.put("conjcoord", CONJ.class.getName());
+		posToTag.put("conjsubo", CONJ.class.getName());
 
 		posToTag.put("verbinf", V.class.getName());
 		posToTag.put("verbpapa", V.class.getName());

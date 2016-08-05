@@ -36,7 +36,8 @@ public class SVGenerator extends JCasAnnotator_ImplBase {
 
 	// Unfortunately, it seems our lemmatizer doesn't handle contractions
 	// and verb forms? XXX: We should just roll our own lemmatizer
-	protected String SVBLACKLIST = "be|have|do|'s|'re|'d|'ve|doe|has|get|give|list";
+//	protected String SVBLACKLIST = "be|have|do|'s|'re|'d|'ve|doe|has|get|give|list";
+	protected String SVBLACKLIST = "zijn|hebben|doen|worden|";
 
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
@@ -98,10 +99,20 @@ public class SVGenerator extends JCasAnnotator_ImplBase {
 	}
 
 	protected Token getFirstVerb(Constituent sentence) {
+		Token candidateV = null;
+		String tokenPos = null;
+		String posToAvoid = null;
+		// TODO: treat adjectives as verbs if not followed by nouns
 		for (Token v : JCasUtil.selectCovered(Token.class, sentence)) {
+			tokenPos = v.getPos().getPosValue();
 			System.out.println("Token: " + v);
 			System.out.println("POS: " + v.getPos());
-			if (!v.getPos().getPosValue().matches("^V.*"))
+			if (posToAvoid != null && !tokenPos.equals(posToAvoid))
+				return candidateV;
+			candidateV = v;
+			if (tokenPos.equals("ADJ"))
+				posToAvoid = "N";
+			if (!tokenPos.matches("^V.*"))
 				continue;
 			if (isAux(v))
 				continue;

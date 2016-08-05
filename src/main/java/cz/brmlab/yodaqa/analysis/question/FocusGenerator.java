@@ -72,18 +72,38 @@ public class FocusGenerator extends JCasAnnotator_ImplBase {
 	}
 
 	public void processSentence(JCas jcas, Constituent sentence) throws AnalysisEngineProcessException {
+		Token focusTok = null;
 		Token focus = null;
+		// Token focus = null;
 		Iterator<Token> tokens = JCasUtil.select(jcas, Token.class).iterator();
 
 		// the first token, except skip named entities at the beginning
-		Token first;
 		do {
-			first = tokens.next();
-		} while (!JCasUtil.selectCovering(Concept.class, first).isEmpty() && tokens.hasNext());
-		first = getFirstTokenOfType(jcas, null, "PR");
+			focusTok = tokens.next();
+		} while (!JCasUtil.selectCovering(Concept.class, focusTok).isEmpty() && tokens.hasNext());
+		focusTok = getFirstTokenOfType(jcas, null, "PR");
+		if (focusTok == null) {
+			focusTok = getFirstTokenOfType(jcas, null, "ADV");
+		}
+		if (focusTok == null) {
+			focusTok = getFirstTokenOfType(jcas, null, "CONJ");
+		}
 
-		if (first.getPos().getPosValue().equals("PR")) {
-			focus = getFirstTokenOfType(jcas, first, "N");
+		// TODO: 'waar' is an ADV
+		// if (first.getPos().getPosValue().equals("PR") ||
+		// first.getPos().getPosValue().equals("ADV")
+		// || first.getPos().getPosValue().equals("CONJ")) {
+		// focus = getFirstTokenOfType(jcas, first, "N");
+		// }
+
+		if (focus == null) {
+			if (focusTok.getLemma().getValue().toLowerCase().equals("hoe")) {
+				focus = focusTok;
+				logger.debug("ADVMOD+how {}", focusTok.getCoveredText());
+			} else if (focusTok.getLemma().getValue().toLowerCase().equals("wanneer")) {
+				focus = focusTok;
+				logger.debug("ADVMOD+W {}", focusTok.getCoveredText());
+			}
 		}
 
 		if (focus == null) {
