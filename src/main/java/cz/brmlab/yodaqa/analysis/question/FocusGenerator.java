@@ -97,13 +97,15 @@ public class FocusGenerator extends JCasAnnotator_ImplBase {
 		// }
 
 		if (focus == null) {
-			if (focusTok.getLemma().getValue().toLowerCase().equals("hoe")) {
-				focus = focusTok;
-				logger.debug("ADVMOD+how {}", focusTok.getCoveredText());
-			} else if (focusTok.getLemma().getValue().toLowerCase().equals("wanneer")) {
-				focus = focusTok;
-				logger.debug("ADVMOD+W {}", focusTok.getCoveredText());
-			}
+			focus = focusTok;
+			logger.debug("ADVMOD+how {}", focusTok.getCoveredText());
+//			if (focusTok.getLemma().getValue().toLowerCase().equals("hoe")) {
+//				focus = focusTok;
+//				logger.debug("ADVMOD+how {}", focusTok.getCoveredText());
+//			} else if (focusTok.getLemma().getValue().toLowerCase().equals("wanneer")) {
+//				focus = focusTok;
+//				logger.debug("ADVMOD+W {}", focusTok.getCoveredText());
+//			}
 		}
 
 		if (focus == null) {

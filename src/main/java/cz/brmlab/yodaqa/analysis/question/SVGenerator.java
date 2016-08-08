@@ -102,14 +102,12 @@ public class SVGenerator extends JCasAnnotator_ImplBase {
 		Token candidateV = null;
 		String tokenPos = null;
 		String posToAvoid = null;
-		// TODO: treat adjectives as verbs if not followed by nouns
 		for (Token v : JCasUtil.selectCovered(Token.class, sentence)) {
 			tokenPos = v.getPos().getPosValue();
-			System.out.println("Token: " + v);
-			System.out.println("POS: " + v.getPos());
 			if (posToAvoid != null && !tokenPos.equals(posToAvoid))
 				return candidateV;
 			candidateV = v;
+			// Treat adjectives as verbs if not followed by nouns
 			if (tokenPos.equals("ADJ"))
 				posToAvoid = "N";
 			if (!tokenPos.matches("^V.*"))

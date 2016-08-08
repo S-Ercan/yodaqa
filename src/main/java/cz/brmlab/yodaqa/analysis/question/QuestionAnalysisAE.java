@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.analysis.tycor.LATByWordnet;
 import cz.brmlab.yodaqa.io.debug.DumpConstituents;
+import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 
 /**
@@ -97,7 +98,7 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		 */
 
 		/* Named Entities: */
-//		builder.add(OpenNlpNamedEntities.createEngineDescription());
+		builder.add(OpenNlpNamedEntities.createEngineDescription());
 
 		/*
 		 * // too weak, we need very rich NE set

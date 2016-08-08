@@ -56,6 +56,7 @@ public class SyncOpenNlpNameFinder extends JCasAnnotator_ImplBase {
 			nf = new OpenNlpNameFinder();
 			try {
 				FieldUtils.writeField(nf, "variant", variant, true);
+				FieldUtils.writeField(nf, "language", "nl", true);
 			} catch (Exception e) {
 				throw new ResourceInitializationException(e);
 			}
