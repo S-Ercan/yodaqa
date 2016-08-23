@@ -88,24 +88,13 @@ public class FocusGenerator extends JCasAnnotator_ImplBase {
 		if (focusTok == null) {
 			focusTok = getFirstTokenOfType(jcas, null, "CONJ");
 		}
-
-		// TODO: 'waar' is an ADV
-		// if (first.getPos().getPosValue().equals("PR") ||
-		// first.getPos().getPosValue().equals("ADV")
-		// || first.getPos().getPosValue().equals("CONJ")) {
-		// focus = getFirstTokenOfType(jcas, first, "N");
-		// }
+		if (focusTok == null) {
+			focusTok = getFirstTokenOfType(jcas, null, "CARD");
+		}
 
 		if (focus == null) {
 			focus = focusTok;
 			logger.debug("ADVMOD+how {}", focusTok.getCoveredText());
-//			if (focusTok.getLemma().getValue().toLowerCase().equals("hoe")) {
-//				focus = focusTok;
-//				logger.debug("ADVMOD+how {}", focusTok.getCoveredText());
-//			} else if (focusTok.getLemma().getValue().toLowerCase().equals("wanneer")) {
-//				focus = focusTok;
-//				logger.debug("ADVMOD+W {}", focusTok.getCoveredText());
-//			}
 		}
 
 		if (focus == null) {

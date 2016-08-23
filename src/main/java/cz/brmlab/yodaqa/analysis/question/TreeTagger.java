@@ -203,6 +203,7 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 
 			@Override
 			protected TreeTaggerWrapper<Token> produceResource(URL aUrl) throws IOException {
+				// TODO: actually produce resource by processing 'nl-tt-pos.map'
 				Properties meta = getResourceMetaData();
 				String encoding = modelEncoding != null ? modelEncoding : meta.getProperty("encoding");
 				String tagset = meta.getProperty("pos.tagset");
@@ -266,6 +267,7 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 				public void token(String aToken, String aPos, String aLemma) {
 					synchronized (cas) {
 						Token token = strToTokMap.get(aToken).removeFirst();
+						// Annotate token with part-of-speech tag
 						if (aPos != null) {
 							String posStr = getTagType(aPos);
 							Type posTag = jCas.getTypeSystem().getType(posStr);
@@ -273,13 +275,10 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 							posAnno.setPosValue(internTags ? posTag.toString().intern() : posTag.toString());
 							String posValue = posTag.getName();
 							posAnno.setPosValue(posValue.substring(posValue.lastIndexOf(".") + 1, posValue.length()));
-							// posAnno.setCoarseValue(posAnno.getClass().equals(POS.class)
-							// ? null
-							// : posAnno.getType().getShortName().intern());
 							token.setPos(posAnno);
 							pos[count.get()] = posAnno;
 						}
-
+						// Annotate token with lemma
 						if (aLemma != null) {
 							Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
 							lemmaAnno.setValue(internTags ? aLemma.intern() : aLemma);
@@ -325,7 +324,9 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		posToTag.put("det__rel", PR.class.getName());
 		posToTag.put("prep", PP.class.getName());
 		posToTag.put("prep_abbr", PP.class.getName());
+
 		posToTag.put("nounsg", N.class.getName());
+		posToTag.put("nounpl", N.class.getName());
 		// Not sure - nounprop is 'proper name'...
 		posToTag.put("nounprop", N.class.getName());
 
