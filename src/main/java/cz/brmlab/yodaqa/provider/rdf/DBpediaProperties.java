@@ -53,9 +53,9 @@ public class DBpediaProperties extends DBpediaOntology {
 			"BIND ( IF(BOUND(?vlabel), ?vlabel, ?valres) AS ?value )\n" +
 
 			 // weed out resources that are categories and other in-namespace junk
-			"FILTER ( !regex(str(?res), '^http://dbpedia.org/resource/[^_]*:', 'i') )\n" +
+			"FILTER ( !regex(str(?res), '^http://nl.dbpedia.org/resource/[^_]*:', 'i') )\n" +
 			 // select only relevant properties
-			"FILTER ( regex(str(?property), '^http://dbpedia.org/property/', 'i') )\n" +
+			"FILTER ( regex(str(?property), '^http://nl.dbpedia.org/property/', 'i') )\n" +
 
 			 // get the property name
 			"?property rdfs:label ?propName .\n" +

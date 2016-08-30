@@ -62,9 +62,9 @@ public class DBpediaTypes extends DBpediaLookup {
 
 			 // keep only resources; e.g. /property/ objects also
 			 // have types!
-			"FILTER ( regex(str(?res), '^http://dbpedia.org/resource/', 'i') )\n" +
+			"FILTER ( regex(str(?res), '^http://.*.dbpedia.org/resource/', 'i') )\n" +
 			 // weed out resources that are categories and other in-namespace junk
-			"FILTER ( !regex(str(?res), '^http://dbpedia.org/resource/[^_]*:', 'i') )\n" +
+			"FILTER ( !regex(str(?res), '^http://.*.dbpedia.org/resource/[^_]*:', 'i') )\n" +
 			"";
 		//logger.debug("executing sparql query: {}", rawQueryStr);
 		List<Literal[]> rawResults = rawQuery(rawQueryStr,

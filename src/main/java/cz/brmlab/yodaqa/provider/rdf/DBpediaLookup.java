@@ -13,9 +13,9 @@ public abstract class DBpediaLookup extends CachedJenaLookup {
 //			"PREFIX dbo: <http://dbpedia.org/ontology/>\n" +
 //			"");
 		super("http://localhost:3031/dbpedia/query",
-				"PREFIX : <http://dbpedia.org/resource/>\n" +
-				"PREFIX dbpedia2: <http://dbpedia.org/property/>\n" +
-				"PREFIX dbpedia: <http://dbpedia.org/>\n" +
+				"PREFIX : <http://nl.dbpedia.org/resource/>\n" +
+				"PREFIX dbpedia2: <http://nl.dbpedia.org/property/>\n" +
+				"PREFIX dbpedia: <http://nl.dbpedia.org/>\n" +
 				"PREFIX dbo: <http://dbpedia.org/ontology/>\n" +
 				"");
 	}

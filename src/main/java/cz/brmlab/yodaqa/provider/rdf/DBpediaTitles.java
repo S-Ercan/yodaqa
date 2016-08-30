@@ -132,7 +132,7 @@ public class DBpediaTitles extends DBpediaLookup {
 		// This escapes unicode characters properly
 		String resURI;
 		try {
-			resURI = new URI("http://dbpedia.org/resource/" + name).toASCIIString();
+			resURI = new URI("http://nl.dbpedia.org/resource/" + name).toASCIIString();
 		} catch (URISyntaxException e) {
 			System.err.println("Bad name: " + name);
 			e.printStackTrace();
