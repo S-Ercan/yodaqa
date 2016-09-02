@@ -30,8 +30,10 @@ import org.slf4j.Logger;
  * and disambiguation pages. */
 
 public class DBpediaTitles extends DBpediaLookup {
-	protected static final String fuzzyLookupUrl = "http://dbp-labels.ailao.eu:5000";
+//	protected static final String fuzzyLookupUrl = "http://dbp-labels.ailao.eu:5000";
 	protected static final String crossWikiLookupUrl = "http://dbp-labels.ailao.eu:5001";
+	protected static final String fuzzyLookupUrl = "http://localhost:5000";
+//	protected static final String crossWikiLookupUrl = "http://localhost:5001";
 
 	/** A container of enwiki article metadata.
 	 * This must 1:1 map to label-lookup API. */
@@ -115,6 +117,7 @@ public class DBpediaTitles extends DBpediaLookup {
 			List<Article> results = new ArrayList<>();
 			for (Article a : entities) {
 				results.addAll(queryArticle(a, logger));
+//				results.addAll(queryArticle(a, logger, "http://nl.dbpedia.org/resource/"));
 			}
 			results = deduplicateResults(results);
 			if (!results.isEmpty())
@@ -123,15 +126,14 @@ public class DBpediaTitles extends DBpediaLookup {
 		return new ArrayList<Article>();
 	}
 
-	/** Query for a given Article in full DBpedia, returning a set of
-	 * articles (transversing redirects and disambiguations). */
-	public List<Article> queryArticle(Article baseA, Logger logger) {
+	public List<Article> queryArticle(Article baseA, Logger logger, String baseURI) {
 		String name = baseA.getName();
 		if (name.contains("\"") || name.startsWith("-")) // generates syntax errors
 			return new ArrayList<Article>();
 		// This escapes unicode characters properly
 		String resURI;
 		try {
+//			name = "Nao";
 			resURI = new URI("http://nl.dbpedia.org/resource/" + name).toASCIIString();
 		} catch (URISyntaxException e) {
 			System.err.println("Bad name: " + name);
@@ -218,6 +220,104 @@ public class DBpediaTitles extends DBpediaLookup {
 
 		return results;
 	}
+	
+	/** Query for a given Article in full DBpedia, returning a set of
+	 * articles (transversing redirects and disambiguations). */
+	public List<Article> queryArticle(Article baseA, Logger logger) {
+		String name = baseA.getName();
+		name = name.substring(name.indexOf('/') + 1, name.length());
+		if (name.contains("\"") || name.startsWith("-")) // generates syntax errors
+			return new ArrayList<Article>();
+		// This escapes unicode characters properly
+		String resURI;
+		try {
+//			name = "Nao";
+			resURI = new URI("http://nl.dbpedia.org/resource/" + name).toASCIIString();
+		} catch (URISyntaxException e) {
+			System.err.println("Bad name: " + name);
+			e.printStackTrace();
+			return new ArrayList<Article>();
+		}
+
+		double prob = baseA.getProb();
+		String rawQueryStr =
+			"{\n" +
+			   // (A) fetch resources with a given name
+			"  BIND(<" + resURI + "> AS ?res)\n" +
+			"} UNION {\n" +
+			   // (B) fetch also resources targetted by redirect
+			"  BIND(<" + resURI + "> AS ?redir)\n" +
+			"  ?redir dbo:wikiPageRedirects ?res .\n" +
+			"} UNION {\n" +
+			   // (C) fetch also resources targetted by disambiguation
+			"  BIND(<" + resURI + "> AS ?disamb)\n" +
+			"  ?disamb dbo:wikiPageDisambiguates ?res .\n" +
+			"} UNION {\n" +
+			   // (B) + (C) (e.g. Aladdin_(film) -> Aladdin_(disambiguation)
+			"  BIND(<" + resURI + "> AS ?redir)\n" +
+			"  ?redir dbo:wikiPageRedirects ?disamb .\n" +
+			"  ?disamb dbo:wikiPageDisambiguates ?res .\n" +
+			"}\n" +
+			 // for (B) and (C), we are also getting a redundant (A) entry;
+			 // identify the redundant (A) entry by filling
+			 // ?redirTarget in that case
+			"OPTIONAL { ?res dbo:wikiPageRedirects ?redirTarget . }\n" +
+			"OPTIONAL { ?res dbo:wikiPageDisambiguates ?disambTarget . }\n" +
+			 // set the output variables
+			"?res dbo:wikiPageID ?pageID .\n" +
+			"?res rdfs:label ?label .\n" +
+			"OPTIONAL { ?res rdfs:comment ?description . FILTER ( LANG(?description) = 'nl' ) }\n" +
+
+			 // ignore the redundant (A) entries (redirects, disambs)
+			"FILTER ( !BOUND(?redirTarget) )\n" +
+			"FILTER ( !BOUND(?disambTarget) )\n" +
+			 // output only dutch labels, thankyouverymuch
+			"FILTER ( LANG(?label) = 'nl' )\n" +
+			"";
+		//logger.debug("executing sparql query: {}", rawQueryStr);
+		List<Literal[]> rawResults = rawQuery(rawQueryStr,
+			new String[] { "pageID", "label", "/res", "description" }, 0);
+
+		List<Article> results = new ArrayList<Article>(rawResults.size());
+		for (Literal[] rawResult : rawResults) {
+			int pageID = rawResult[0].getInt();
+			String label = rawResult[1].getString();
+			String tgRes = rawResult[2].getString();
+			String descr = rawResult[3] != null ? rawResult[3].getString() : null;
+
+			/* http://dbpedia.org/resource/-al is valid IRI, but
+			 * Jena bastardizes it automatically to :-al which is
+			 * not valid and must be written as :\-al.
+			 * XXX: Unfortunately, Jena also eats the backslashes
+			 * it sees during that process, so we just give up and
+			 * throw away these rare cases. */
+			if (tgRes.contains("/-")) {
+				logger.warn("Giving up on DBpedia {}", tgRes);
+				continue;
+			}
+
+			String tgName = tgRes.substring("http://dbpedia.org/resource/".length());
+
+			/* We approximate the concept popularity simply by how
+			 * many relations it partakes in.  We take a log
+			 * though to keep it at least roughly normalized. */
+			double pop = Math.log(queryCount(tgRes));
+
+			String descrText = "(null)";
+			if (descr != null) {
+				try {
+					descrText = "..." + descr.substring(10, 30) + "...";
+				} catch (StringIndexOutOfBoundsException e) {
+					descrText = descr;
+				}
+			}
+			logger.debug("DBpedia {}: [[{}]] (id={}; pop={}; descr=<<{}>>)",
+					name, label, pageID, pop, descrText);
+			results.add(new Article(baseA, label, pageID, tgName, pop, prob, descr));
+		}
+
+		return results;
+	}
 
 	/** Counts the number of matches in rdf triplets (outward and inward). */
 	public int queryCount(String name) {
@@ -258,6 +358,7 @@ public class DBpediaTitles extends DBpediaLookup {
 			jr.beginArray();
 			while (jr.hasNext()) {
 				Article o = gson.fromJson(jr, Article.class);
+				System.out.println(o.name + ", " + o.pageID);
 				// Record all exact-matching entities,
 				// or the single nearest fuzzy-matched
 				// one.

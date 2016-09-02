@@ -51,6 +51,8 @@ public abstract class CachedJenaLookup {
 			"PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
 			"PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
 			"PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
+			"PREFIX dbnlr: <http://nl.dbpedia.org/resource/>\n" +
+			"PREFIX dbnlp: <http://nl.dbpedia.org/property/>\n" +
 			prefixes_;
 	}
 
@@ -76,6 +78,16 @@ public abstract class CachedJenaLookup {
 		if (cache.contains(queryExpr)) {
 			return cache.retrieve(queryExpr);
 		}
+
+//		queryExpr = "PREFIX d: <http://example.com/ns/data#> "
+//				+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+//				+ "SELECT ?object "
+//				+ "WHERE { d:i2 rdfs:label ?object } "
+//				+ "LIMIT 10";
+//		queryExpr = "PREFIX dbnlp: <http://nl.dbpedia.org/property/> "
+//				+ "SELECT ?subject ?object "
+//				+ "WHERE { ?subject dbnlp:land ?object "
+//				+ "FILTER (LANG(?object)='nl')} LIMIT 10";
 		QueryExecution qe = QueryExecutionFactory.sparqlService(service, queryExpr);
 		// logger.debug(queryExpr);
 
