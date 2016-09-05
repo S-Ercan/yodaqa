@@ -50,11 +50,11 @@ public class DBpediaOntology extends DBpediaLookup {
 		String rawQueryStr =
 			"{\n" +
 			   // (A) fetch resources with @title label
-			"  ?res rdfs:label \"" + quotedTitle + "\"@en.\n" +
+			"  ?res rdfs:label \"" + quotedTitle + "\"@nl.\n" +
 			"} UNION {\n" +
 			   // (B) fetch also resources targetted by @title redirect
 			"  ?redir dbo:wikiPageRedirects ?res .\n" +
-			"  ?redir rdfs:label \"" + quotedTitle + "\"@en .\n" +
+			"  ?redir rdfs:label \"" + quotedTitle + "\"@nl .\n" +
 			"}\n" +
 			 // set the output variables
 			"?res ?propres ?valres .\n" +
@@ -70,8 +70,9 @@ public class DBpediaOntology extends DBpediaLookup {
 			 // weed out resources that are categories and other in-namespace junk
 			"FILTER ( !regex(str(?res), '^http://nl.dbpedia.org/resource/[^_]*:', 'i') )\n" +
 			 // select only relevant properties
-			"FILTER ( regex(str(?propres), '^http://dbpedia.org/ontology', 'i') )\n" +
-			"FILTER ( !regex(str(?propres), '^http://dbpedia.org/ontology/(wiki|abstract)', 'i') )\n" +
+			// TODO: investigate reactivation
+//			"FILTER ( regex(str(?propres), '^http://dbpedia.org/ontology', 'i') )\n" +
+//			"FILTER ( !regex(str(?propres), '^http://dbpedia.org/ontology/(wiki|abstract)', 'i') )\n" +
 			"";
 		// logger.debug("executing sparql query: {}", rawQueryStr);
 		List<Literal[]> rawResults = rawQuery(rawQueryStr,

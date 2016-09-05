@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectNE;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectPhrase;
+import cz.brmlab.yodaqa.model.Question.ClueSubjectToken;
 import cz.brmlab.yodaqa.model.Question.QuestionInfo;
 import cz.brmlab.yodaqa.model.Question.ArtificialClue;
 
@@ -255,6 +256,8 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 		for (Clue clue : JCasUtil.select(resultView, ClueSubjectPhrase.class))
 			clues.add(clue);
 		for (Clue clue : JCasUtil.select(resultView, ClueSubjectNE.class))
+			clues.add(clue);
+		for (Clue clue : JCasUtil.select(resultView, ClueSubjectToken.class))
 			clues.add(clue);
 		return clues;
 	}

@@ -50,6 +50,10 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		for (Token token : JCasUtil.selectCovered(Token.class, sentence))
 			if (token.getPos().getPosValue().equals("N"))
 				processSubj(jcas, token);
+		for (Token subj : JCasUtil.select(jcas, Token.class)) {
+			if (subj.getPos().getPosValue().equals("N"))
+				processSubj(jcas, subj);
+		}
 		for (NSUBJ subj : JCasUtil.selectCovered(NSUBJ.class, sentence))
 			processSubj(jcas, subj);
 		for (NSUBJPASS subj : JCasUtil.selectCovered(NSUBJPASS.class, sentence))
