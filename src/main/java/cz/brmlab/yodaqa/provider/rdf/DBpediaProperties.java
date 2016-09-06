@@ -40,11 +40,11 @@ public class DBpediaProperties extends DBpediaOntology {
 		String rawQueryStr =
 			"{\n" +
 			   // (A) fetch resources with @title label
-			"  ?res rdfs:label \"" + quotedTitle + "\"@en.\n" +
+			"  ?res rdfs:label \"" + quotedTitle + "\"@nl.\n" +
 			"} UNION {\n" +
 			   // (B) fetch also resources targetted by @title redirect
 			"  ?redir dbo:wikiPageRedirects ?res .\n" +
-			"  ?redir rdfs:label \"" + quotedTitle + "\"@en .\n" +
+			"  ?redir rdfs:label \"" + quotedTitle + "\"@nl .\n" +
 			"}\n" +
 			 // set the output variables
 			"?res ?property ?valres .\n" +
