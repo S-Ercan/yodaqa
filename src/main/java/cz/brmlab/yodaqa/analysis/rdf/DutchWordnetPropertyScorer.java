@@ -6,6 +6,9 @@ import cz.brmlab.yodaqa.model.TyCor.LAT;
 //import cz.brmlab.yodaqa.provider.SynonymsPCCP.Synonym;
 import cz.brmlab.yodaqa.provider.rdf.PropertyValue;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import vu.wntools.wnsimilarity.main.WordSim;
+import vu.wntools.wordnet.WordnetData;
+import vu.wntools.wordnet.WordnetLmfSaxParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +31,7 @@ public class DutchWordnetPropertyScorer {
 
 	List<String> baseTexts;
 	Map<String, Double> synonyms;
+	WordnetData wordnetData;
 
 	public DutchWordnetPropertyScorer(JCas questionView) {
 		baseTexts = new ArrayList<>();
@@ -35,6 +39,9 @@ public class DutchWordnetPropertyScorer {
 		for (Token token : JCasUtil.select(questionView, Token.class)) {
 			loadSynonyms(token.getCoveredText());
 		}
+		WordnetLmfSaxParser parser = new WordnetLmfSaxParser();
+		parser.parseFile("/home/selman/Software/Git/QA/OpenDutchWordnet/resources/odwn/odwn_orbn_gwg-LMF.xml");
+		wordnetData = parser.wordnetData;
 //		for (LAT lat : JCasUtil.select(questionView, LAT.class)) {
 //			if (lat.getSpecificity() <= -1)
 //				continue;
@@ -67,22 +74,31 @@ public class DutchWordnetPropertyScorer {
 	}
 
 	protected Double getPropTextScore(String prop) {
+		double maxSimilarityScore = 0.0;
+		double similarityScore;
 		for (String baseText : baseTexts) {
-			if (baseText.contains(prop) || prop.contains(baseText)) {
-				logger.debug("prop {} EXACT", prop);
-				return 2.0; // synonym scores go up to ~1.87
+//			if (baseText.contains(prop) || prop.contains(baseText)) {
+//				logger.debug("prop {} EXACT", prop);
+//				return 2.0; // synonym scores go up to ~1.87
+//			} else {
+			similarityScore = WordSim.getWordSimLC(wordnetData, prop, baseText);
+			if (similarityScore > maxSimilarityScore) {
+				maxSimilarityScore = similarityScore;
 			}
+//			}
 		}
-		if (baseTexts.contains(prop)) {
-			logger.debug("prop {} EXACT", prop);
-			return 2.0; // synonym scores go up to ~1.87
-		} else if (synonyms.containsKey(prop)) {
-			logger.debug("prop {}: {}", prop, synonyms.get(prop));
-			return synonyms.get(prop);
-		} else {
-			logger.debug("unk prop <<{}>>", prop);
-			return null;
-		}
+		System.out.println("Score for " + prop + ": " + maxSimilarityScore);
+		return maxSimilarityScore;
+//		if (baseTexts.contains(prop)) {
+//			logger.debug("prop {} EXACT", prop);
+//			return 2.0; // synonym scores go up to ~1.87
+//		} else if (synonyms.containsKey(prop)) {
+//			logger.debug("prop {}: {}", prop, synonyms.get(prop));
+//			return synonyms.get(prop);
+//		} else {
+//			logger.debug("unk prop <<{}>>", prop);
+//			return null;
+//		}
 	}
 
 	public Double getPropertyScore(PropertyValue pv) {
