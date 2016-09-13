@@ -7,16 +7,14 @@ import org.apache.uima.fit.descriptor.SofaCapability;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.brmlab.yodaqa.analysis.ansscore.AnswerFV;
 import cz.brmlab.yodaqa.analysis.ansscore.AF;
+import cz.brmlab.yodaqa.analysis.ansscore.AnswerFV;
 import cz.brmlab.yodaqa.model.Question.Clue;
 import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import cz.brmlab.yodaqa.model.SearchResult.ResultInfo;
-
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
 
 /**
  * Create CandidateAnswers for all NP constituents (noun phrases) that do not
@@ -50,7 +48,8 @@ public class CanByNPSurprise extends CandidateGenerator {
 
 		ResultInfo ri = JCasUtil.selectSingle(resultView, ResultInfo.class);
 
-		for (NP np : JCasUtil.select(passagesView, NP.class)) {
+//		for (NP np : JCasUtil.select(passagesView, NP.class)) {
+		for (N np : JCasUtil.select(passagesView, N.class)) {
 			String text = np.getCoveredText();
 
 			/* TODO: This can be optimized a lot. */

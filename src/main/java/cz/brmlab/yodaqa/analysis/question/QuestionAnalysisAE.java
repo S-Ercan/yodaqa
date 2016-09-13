@@ -12,6 +12,7 @@ import cz.brmlab.yodaqa.analysis.tycor.LATByWordnet;
 import cz.brmlab.yodaqa.io.debug.DumpConstituents;
 import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 
 /**
  * Annotate the QuestionCAS.
@@ -39,18 +40,21 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		/* Token features: */
 
 		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class));
-		// builder.add(AnalysisEngineFactory.createEngineDescription(TreeTaggerPosTagger.class,
-		// TreeTaggerPosTagger.PARAM_LANGUAGE, "en"));
-		 builder.add(AnalysisEngineFactory.createEngineDescription(TreeTagger.class));
-//		 ,TreeTagger.PARAM_LANGUAGE, "nl"));
-//		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpParser.class,
-//				OpenNlpParser.PARAM_MODEL_LOCATION, "/home/selman/Software/Git/QA/yodaqa/lib/parser-nl-chunking.bin",
-//				OpenNlpParser.PARAM_LANGUAGE, "en"));
 
 		/* POS, constituents, dependencies: */
-		// // fast, reliable
-		// builder.add(AnalysisEngineFactory.createEngineDescription(StanfordParser.class,
-		// StanfordParser.PARAM_WRITE_POS, true));
+		// fast, reliable
+//		builder.add(AnalysisEngineFactory.createEngineDescription(StanfordParser.class, StanfordParser.PARAM_WRITE_POS,
+//				true));
+
+		// builder.add(AnalysisEngineFactory.createEngineDescription(TreeTaggerPosTagger.class,
+		// TreeTaggerPosTagger.PARAM_LANGUAGE, "en"));
+		builder.add(AnalysisEngineFactory.createEngineDescription(AlpinoParser.class));
+		builder.add(AnalysisEngineFactory.createEngineDescription(TreeTagger.class));
+		// ,TreeTagger.PARAM_LANGUAGE, "nl"));
+		// builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpParser.class,
+		// OpenNlpParser.PARAM_MODEL_LOCATION,
+		// "/home/selman/Software/Git/QA/yodaqa/lib/parser-nl-chunking.bin",
+		// OpenNlpParser.PARAM_LANGUAGE, "en"));
 
 		// slow startup, no dependencies, superseded
 		// builder.add(AnalysisEngineFactory.createEngineDescription(BerkeleyParser.class));
@@ -72,7 +76,7 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		/* Lemma features: */
 
 		// fastest and handling numbers correctly:
-//		builder.add(AnalysisEngineFactory.createEngineDescription(LanguageToolLemmatizer.class));
+		// builder.add(AnalysisEngineFactory.createEngineDescription(LanguageToolLemmatizer.class));
 		/*
 		 * builder.add(AnalysisEngineFactory.createEngineDescription(
 		 * StanfordLemmatizer.class));
