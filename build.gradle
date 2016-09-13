@@ -147,6 +147,7 @@ dependencies {
   compile 'org.codehaus.groovy:groovy-all:2.3.10'
   compile 'org.jblas:jblas:1.2.3'
   compile 'org.xerial:sqlite-jdbc:3.8.10.1'
+  compile files('lib/WordnetTools-v3.0.jar')
   //compile 'de.tudarmstadt.ukp.dkpro.core.treetagger-model-tagger-nl-le:20130107.1'
   compile group: 'org.annolab.tt4j', name: 'org.annolab.tt4j', version: '1.2.1'
   testCompile 'junit:junit:[4,)'
