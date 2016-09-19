@@ -30,6 +30,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.WHQ;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -137,15 +140,17 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		// IntPair span = tokenTree.getSpan(aNode);
 
 		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, relNode, posNode;
-		beginNode = endNode = relNode = posNode = null;
+		Node beginNode, endNode, catNode, relNode, posNode;
+		beginNode = endNode = catNode = relNode = posNode = null;
 		if (attrs != null) {
 			beginNode = attrs.getNamedItem("begin");
 			endNode = attrs.getNamedItem("end");
+			catNode = attrs.getNamedItem("cat");
 			relNode = attrs.getNamedItem("rel");
 			posNode = attrs.getNamedItem("pos");
 		}
-		IntPair span = new IntPair(0, 1);
+		IntPair span = new IntPair(Integer.parseInt(beginNode.getNodeValue()),
+				Integer.parseInt(endNode.getNodeValue()));
 
 		// Check if the node has been marked by a TSurgeon operation.
 		// If so, add a tag-annotation on the constituent
@@ -160,8 +165,8 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 		// Check if node is a constituent node on sentence or phrase-level
 		// if (aNode.isPhrasal()) {
-		if (relNode != null) {
-			nodeLabelValue = relNode.getNodeValue();
+		if (catNode != null) {
+			nodeLabelValue = catNode.getNodeValue();
 			// add annotation to annotation tree
 			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(), nodeLabelValue,
 					null);
@@ -254,13 +259,29 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	}
 
 	private Type getConstituentType(String constituentType) {
-		constituentType = ROOT.class.getName();
-        return getJCas().getTypeSystem().getType(constituentType);
+		switch (constituentType) {
+		case "top":
+			constituentType = ROOT.class.getName();
+			break;
+		case "whq":
+			constituentType = WHQ.class.getName();
+			break;
+		case "sv1":
+			constituentType = SV1.class.getName();
+			break;
+		case "np":
+			constituentType = NP.class.getName();
+			break;
+		default:
+			constituentType = Constituent.class.getName();
+		}
+		Type type = getJCas().getTypeSystem().getType(constituentType);
+		return type;
 	}
 
 	private Type getPOSType(String posType) {
 		posType = N.class.getName();
-        return getJCas().getTypeSystem().getType(posType);
+		return getJCas().getTypeSystem().getType(posType);
 	}
 
 	public JCas getJCas() {
