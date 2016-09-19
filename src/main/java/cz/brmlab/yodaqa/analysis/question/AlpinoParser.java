@@ -7,7 +7,9 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,6 +46,8 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	private JCas jCas = null;
 
+	private List<Token> tokenList;
+
 	private String hostName = "localhost";
 	private int portNumber = 42424;
 
@@ -54,6 +58,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 		try {
+			tokenList = new ArrayList<Token>();
 			parseSocket = new Socket(hostName, portNumber);
 			out = new PrintWriter(parseSocket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
@@ -65,7 +70,17 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 		setJCas(aJCas);
-		out.println("Hoe heet de Nao?");
+
+		String sentence = "";
+		String text;
+		for (Token token : JCasUtil.select(jCas, Token.class)) {
+			text = token.getCoveredText();
+			tokenList.add(token);
+			sentence += text + ' ';
+		}
+		System.out.println(sentence);
+		out.println(sentence);
+
 		String line;
 		String output = "";
 		try {
@@ -126,7 +141,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			}
 			return null;
 		}
-		String nodeLabelValue;
 		// String syntacticFunction = null;
 		// AbstractTreebankLanguagePack tlp = (AbstractTreebankLanguagePack)
 		// aTreebankLanguagePack;
@@ -140,36 +154,28 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		// IntPair span = tokenTree.getSpan(aNode);
 
 		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, catNode, relNode, posNode;
-		beginNode = endNode = catNode = relNode = posNode = null;
+		Node beginNode, endNode, catNode, relNode, posNode, wordNode;
+		beginNode = endNode = catNode = relNode = posNode = wordNode = null;
 		if (attrs != null) {
 			beginNode = attrs.getNamedItem("begin");
 			endNode = attrs.getNamedItem("end");
 			catNode = attrs.getNamedItem("cat");
 			relNode = attrs.getNamedItem("rel");
 			posNode = attrs.getNamedItem("pos");
+			wordNode = attrs.getNamedItem("word");
 		}
-		IntPair span = new IntPair(Integer.parseInt(beginNode.getNodeValue()),
-				Integer.parseInt(endNode.getNodeValue()));
 
-		// Check if the node has been marked by a TSurgeon operation.
-		// If so, add a tag-annotation on the constituent
-		// if (nodeLabelValue.contains(TAG_SEPARATOR) &&
-		// !nodeLabelValue.equals(TAG_SEPARATOR)) {
-		// int separatorIndex = nodeLabelValue.indexOf(TAG_SEPARATOR);
-		// String tag = nodeLabelValue.substring(0, separatorIndex);
-		// nodeLabelValue = nodeLabelValue.substring(separatorIndex + 1,
-		// nodeLabelValue.length());
-		// createTagAnnotation(span.getSource(), span.getTarget(), tag);
-		// }
+		int firstTokenIndex = Integer.parseInt(beginNode.getNodeValue());
+		int lastTokenIndex = Integer.parseInt(endNode.getNodeValue()) - 1;
+		Token token = tokenList.get(firstTokenIndex);
+		int nodeBeginIndex = tokenList.get(firstTokenIndex).getBegin();
+		int nodeEndIndex = tokenList.get(lastTokenIndex).getEnd();
+		IntPair span = new IntPair(nodeBeginIndex, nodeEndIndex);
 
-		// Check if node is a constituent node on sentence or phrase-level
-		// if (aNode.isPhrasal()) {
 		if (catNode != null) {
-			nodeLabelValue = catNode.getNodeValue();
 			// add annotation to annotation tree
-			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(), nodeLabelValue,
-					null);
+			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(),
+					catNode.getNodeValue(), null);
 			// link to parent
 			if (aParentFS != null) {
 				constituent.setParent(aParentFS);
@@ -200,21 +206,9 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			jCas.addFsToIndexes(constituent);
 
 			return constituent;
-		}
-		// If the node is a word-level constituent node (== POS):
-		// create parent link on token and (if not turned off) create POS tag
-		// else if (aNode.isPreTerminal()) {
-		if (posNode != null) {
+		} else if (posNode != null) {
 			// create POS-annotation (annotation over the token)
-			nodeLabelValue = posNode.getNodeValue();
-			POS pos = createPOSAnnotation(span.getSource(), span.getTarget(), nodeLabelValue);
-
-			// in any case: get the token that is covered by the POS
-			// TODO how about multi word prepositions etc. (e.g. "such as")
-			List<Token> coveredTokens = JCasUtil.selectCovered(jCas, Token.class, pos);
-			// the POS should only cover one token
-			assert coveredTokens.size() == 1;
-			Token token = coveredTokens.get(0);
+			POS pos = createPOSAnnotation(span.getSource(), span.getTarget(), posNode.getNodeValue());
 
 			// only add POS to index if we want POS-tagging
 			if (aCreatePos) {
@@ -228,9 +222,10 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			}
 
 			return token;
-		} else {
-			throw new IllegalArgumentException("Node must be either phrasal nor pre-terminal");
+		} else if (relNode == null) {
+//			throw new IllegalArgumentException("Node must have a category, POS, or rel label.");
 		}
+		return null;
 	}
 
 	public Constituent createConstituentAnnotation(int aBegin, int aEnd, String aConstituentType,
