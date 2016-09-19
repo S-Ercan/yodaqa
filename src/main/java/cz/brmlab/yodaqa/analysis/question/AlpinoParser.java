@@ -7,9 +7,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,7 +33,11 @@ import org.xml.sax.SAXException;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.WHQ;
-import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
+import cz.brmlab.yodaqa.model.alpino.type.pos.ADJ;
+import cz.brmlab.yodaqa.model.alpino.type.pos.DET;
+import cz.brmlab.yodaqa.model.alpino.type.pos.NAME;
+import cz.brmlab.yodaqa.model.alpino.type.pos.PUNCT;
+import cz.brmlab.yodaqa.model.alpino.type.pos.VERB;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
@@ -102,7 +104,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			Document parseTree = dBuilder.parse(new InputSource(new StringReader(output)));
 			parseTree.getDocumentElement().normalize();
 
-			annotateParseTree(parseTree.getDocumentElement());
+			createConstituentAnnotationFromTree(parseTree.getDocumentElement(), null, true);
 		} catch (ParserConfigurationException e1) {
 			e1.printStackTrace();
 		} catch (SAXException e) {
@@ -110,15 +112,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public void annotateParseTree(Node treeNode) {
-		// System.out.println("Node: " + treeNode.getTextContent());
-		// NodeList children = treeNode.getChildNodes();
-		// for (int i = 0; i < children.getLength(); i++) {
-		// annotateParseTree(children.item(i));
-		// }
-		createConstituentAnnotationFromTree(treeNode, null, true);
 	}
 
 	private Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS, boolean aCreatePos) {
@@ -137,32 +130,20 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		} else {
 			NodeList children = aNode.getChildNodes();
 			for (int i = 0; i < children.getLength(); i++) {
-				annotateParseTree(children.item(i));
+				createConstituentAnnotationFromTree(children.item(i), null, true);
 			}
 			return null;
 		}
-		// String syntacticFunction = null;
-		// AbstractTreebankLanguagePack tlp = (AbstractTreebankLanguagePack)
-		// aTreebankLanguagePack;
-		// int gfIdx = nodeLabelValue.indexOf(tlp.getGfCharacter());
-		// if (gfIdx > 0) {
-		// syntacticFunction = nodeLabelValue.substring(gfIdx + 1);
-		// nodeLabelValue = nodeLabelValue.substring(0, gfIdx);
-		// }
-
-		// calculate span for the current subtree
-		// IntPair span = tokenTree.getSpan(aNode);
 
 		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, catNode, relNode, posNode, wordNode;
-		beginNode = endNode = catNode = relNode = posNode = wordNode = null;
+		Node beginNode, endNode, catNode, relNode, posNode;
+		beginNode = endNode = catNode = relNode = posNode = null;
 		if (attrs != null) {
 			beginNode = attrs.getNamedItem("begin");
 			endNode = attrs.getNamedItem("end");
 			catNode = attrs.getNamedItem("cat");
 			relNode = attrs.getNamedItem("rel");
 			posNode = attrs.getNamedItem("pos");
-			wordNode = attrs.getNamedItem("word");
 		}
 
 		int firstTokenIndex = Integer.parseInt(beginNode.getNodeValue());
@@ -172,6 +153,10 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		int nodeEndIndex = tokenList.get(lastTokenIndex).getEnd();
 		IntPair span = new IntPair(nodeBeginIndex, nodeEndIndex);
 
+		if (relNode != null) {
+			//TODO: process dependencies
+		}
+		
 		if (catNode != null) {
 			// add annotation to annotation tree
 			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(),
@@ -270,12 +255,29 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		default:
 			constituentType = Constituent.class.getName();
 		}
-		Type type = getJCas().getTypeSystem().getType(constituentType);
-		return type;
+		return getJCas().getTypeSystem().getType(constituentType);
 	}
 
 	private Type getPOSType(String posType) {
-		posType = N.class.getName();
+		switch (posType) {
+		case "adj":
+			posType = ADJ.class.getName();
+			break;
+		case "verb":
+			posType = VERB.class.getName();
+			break;
+		case "det":
+			posType = DET.class.getName();
+			break;
+		case "name":
+			posType = NAME.class.getName();
+			break;
+		case "punct":
+			posType = PUNCT.class.getName();
+			break;
+		default:
+			posType = POS.class.getName();
+		}
 		return getJCas().getTypeSystem().getType(posType);
 	}
 
