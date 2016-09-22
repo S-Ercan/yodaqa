@@ -59,20 +59,22 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
-		try {
-			tokenList = new ArrayList<Token>();
-			parseSocket = new Socket(hostName, portNumber);
-			out = new PrintWriter(parseSocket.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		tokenList = new ArrayList<Token>();
 	}
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		setJCas(aJCas);
+		try {
+			parseSocket = new Socket(hostName, portNumber);
+			out = new PrintWriter(parseSocket.getOutputStream(), true);
+			in = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
+		setJCas(aJCas);
+		// Combine tokens into sentence
 		String sentence = "";
 		String text;
 		for (Token token : JCasUtil.select(jCas, Token.class)) {
@@ -81,39 +83,39 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			sentence += text + ' ';
 		}
 		System.out.println(sentence);
+		// Send sentence for parsing
 		out.println(sentence);
-
+		// Read parse output
 		String line;
 		String output = "";
 		try {
 			while ((line = in.readLine()) != null) {
 				output += line;
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
 			parseSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		// Process parse output
+		processParseTree(output);
+	}
 
+	private void processParseTree(String parseOutput) {
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document parseTree = dBuilder.parse(new InputSource(new StringReader(output)));
+			Document parseTree = dBuilder.parse(new InputSource(new StringReader(parseOutput)));
 			parseTree.getDocumentElement().normalize();
-
 			createConstituentAnnotationFromTree(parseTree.getDocumentElement(), null, true);
-		} catch (ParserConfigurationException e1) {
-			e1.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
 		} catch (SAXException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	private Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS, boolean aCreatePos) {
 		if (aNode.getNodeName().equals("node")) {
 			NamedNodeMap attrs = aNode.getAttributes();

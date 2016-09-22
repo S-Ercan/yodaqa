@@ -15,11 +15,11 @@ import cz.brmlab.yodaqa.model.Question.ClueSubjectNE;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectToken;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectPhrase;
 import cz.brmlab.yodaqa.model.Question.Subject;
-
+import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
+//import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 
 /**
  * Generate Clue annotations in a QuestionCAS. These represent key information

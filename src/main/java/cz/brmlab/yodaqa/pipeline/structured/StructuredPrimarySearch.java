@@ -63,6 +63,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 
 public abstract class StructuredPrimarySearch extends JCasMultiplier_ImplBase {
 	protected Logger logger = LoggerFactory.getLogger(StructuredPrimarySearch.class);
+	DutchWordnetPropertyScorer propScorer;
 
 	protected JCas questionView;
 	protected Iterator<PropertyValue> relIter;
@@ -83,6 +84,9 @@ public abstract class StructuredPrimarySearch extends JCasMultiplier_ImplBase {
 	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
+		if (propScorer == null) {
+			propScorer = DutchWordnetPropertyScorer.getDutchWordnetPropertyScorer();
+		}
 	}
 
 	/**
@@ -94,13 +98,11 @@ public abstract class StructuredPrimarySearch extends JCasMultiplier_ImplBase {
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		questionView = jcas;
 
-		DutchWordnetPropertyScorer propScorer = new DutchWordnetPropertyScorer(questionView);
-
 		List<PropertyValue> properties = new ArrayList<PropertyValue>();
 		for (Concept concept : JCasUtil.select(questionView, Concept.class)) {
 			List<PropertyValue> conceptProperties = getConceptProperties(questionView, concept);
 			for (PropertyValue pv : conceptProperties) {
-				Double pscore = propScorer.getPropertyScore(pv);
+				Double pscore = propScorer.getPropertyScore(questionView, pv);
 				if (pscore == null)
 					continue;
 				if (pv.getScore() == null) {
