@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import cz.brmlab.yodaqa.analysis.TreeUtil;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.Subject;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
 
 /**
  * Subject annotations in a QuestionCAS. These represent key information
@@ -58,6 +59,10 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 			processSubj(jcas, subj);
 		for (NSUBJPASS subj : JCasUtil.selectCovered(NSUBJPASS.class, sentence))
 			processSubj(jcas, subj);
+		
+		for (SU subj : JCasUtil.select(jcas, SU.class)) {
+			processSubj(jcas, subj);
+		}
 	}
 
 	protected void processSubj(JCas jcas, Token stok) throws AnalysisEngineProcessException {

@@ -1,13 +1,17 @@
 package cz.brmlab.yodaqa.analysis.question;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -51,11 +55,11 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	private List<Token> tokenList;
 
 	private String hostName = "localhost";
-	private int portNumber = 42424;
+	private int parsePortNumber = 42424;
 
 	private Socket parseSocket;
-	private PrintWriter out;
-	private BufferedReader in;
+	private PrintWriter parseOut;
+	private BufferedReader parseIn;
 
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
@@ -65,12 +69,11 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 		try {
-			parseSocket = new Socket(hostName, portNumber);
-			out = new PrintWriter(parseSocket.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			parseSocket = new Socket(hostName, parsePortNumber);
+			parseOut = new PrintWriter(parseSocket.getOutputStream(), true);
+			parseIn = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 		setJCas(aJCas);
@@ -82,22 +85,31 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			tokenList.add(token);
 			sentence += text + ' ';
 		}
-		System.out.println(sentence);
-		// Send sentence for parsing
-		out.println(sentence);
-		// Read parse output
+		// Get parse tree and dependency triples
+		String parseOutput = getParseOutput(sentence);
+		processParseTree(parseOutput);
+		String dependencyOutput;
+		try {
+			dependencyOutput = getDependencyOutput(sentence);
+			processDependencyTriples(dependencyOutput);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private String getParseOutput(String sentence) {
+		parseOut.println(sentence);
 		String line;
 		String output = "";
 		try {
-			while ((line = in.readLine()) != null) {
+			while ((line = parseIn.readLine()) != null) {
 				output += line;
 			}
 			parseSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// Process parse output
-		processParseTree(output);
+		return output;
 	}
 
 	private void processParseTree(String parseOutput) {
@@ -115,7 +127,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS, boolean aCreatePos) {
 		if (aNode.getNodeName().equals("node")) {
 			NamedNodeMap attrs = aNode.getAttributes();
@@ -156,9 +168,9 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		IntPair span = new IntPair(nodeBeginIndex, nodeEndIndex);
 
 		if (relNode != null) {
-			//TODO: process dependencies
+			// TODO: process dependencies
 		}
-		
+
 		if (catNode != null) {
 			// add annotation to annotation tree
 			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(),
@@ -210,7 +222,8 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 			return token;
 		} else if (relNode == null) {
-//			throw new IllegalArgumentException("Node must have a category, POS, or rel label.");
+			// throw new IllegalArgumentException("Node must have a category,
+			// POS, or rel label.");
 		}
 		return null;
 	}
@@ -281,6 +294,99 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			posType = POS.class.getName();
 		}
 		return getJCas().getTypeSystem().getType(posType);
+	}
+
+	private String getDependencyOutput(String sentence) throws IOException {
+		ProcessBuilder builder = new ProcessBuilder("/bin/bash", "bin/Alpino", "end_hook=triples", "-parse", "-notk");
+		builder.directory(new File("/home/selman/Software/Libraries/Alpino/"));
+		Map<String, String> env = builder.environment();
+		env.put("ALPINO_HOME", "/home/selman/Software/Libraries/Alpino/");
+
+		final Process process = builder.start();
+
+		Thread inThread = new Thread() {
+			@Override
+			public void run() {
+				PrintWriter out = new PrintWriter(process.getOutputStream());
+				out.println("Wat is een robot?");
+				out.flush();
+				out.close();
+			}
+		};
+		inThread.start();
+
+		MyRunnable myRunnable = new MyRunnable(process);
+		Thread outThread = new Thread(myRunnable);
+		outThread.start();
+
+		Thread err = new Thread() {
+			@Override
+			public void run() {
+				InputStreamReader is = new InputStreamReader(process.getErrorStream());
+				Scanner scanner = new Scanner(is);
+				String line = null;
+				while (scanner.hasNextLine()) {
+					line = scanner.nextLine();
+					System.out.println(line);
+				}
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				scanner.close();
+			}
+		};
+		err.start();
+
+		try {
+			process.waitFor();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return myRunnable.getOutput();
+	}
+
+	class MyRunnable implements Runnable {
+		private Process process;
+		private String output;
+
+		public MyRunnable(Process process) {
+			this.process = process;
+		}
+
+		public String getOutput() {
+			return output;
+		}
+
+		public void setOutput(String output) {
+			this.output = output;
+		}
+
+		@Override
+		public void run() {
+			// For reading process output
+			InputStreamReader is = new InputStreamReader(process.getInputStream());
+			Scanner scanner = new Scanner(is);
+			// For writing process output to string
+			StringWriter strWriter = new StringWriter();
+			PrintWriter writer = new PrintWriter(strWriter, true);
+			// Read process output
+			while (scanner.hasNextLine()) {
+				writer.println(scanner.nextLine());
+			}
+			setOutput(strWriter.toString());
+			try {
+				is.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			scanner.close();
+		}
+	}
+
+	private void processDependencyTriples(String output) {
+
 	}
 
 	public JCas getJCas() {
