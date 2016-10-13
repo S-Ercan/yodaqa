@@ -11,8 +11,10 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 
-/** Collection of dependency tree annotation tools. For example for iterating
- * dependencies of a specific token through prepositions. */
+/**
+ * Collection of dependency tree annotation tools. For example for iterating
+ * dependencies of a specific token through prepositions.
+ */
 
 public class TreeUtil {
 	public static List<Token> getAllGoverned(JCas jcas, Constituent sentence, Token gov, String typeMatch) {
@@ -21,7 +23,7 @@ public class TreeUtil {
 			if (d.getGovernor() != gov)
 				continue;
 			if (d.getDependencyType().equals("prep") // dkpro < 1.7.0 "- of -"
-			    || d.getDependencyType().equals("prep_of")) { // - of -
+					|| d.getDependencyType().equals("prep_of")) { // - of -
 				if (d.getDependent().getLemma().getValue().toLowerCase().equals("of"))
 					list.addAll(getAllGoverned(jcas, sentence, d.getDependent(), typeMatch));
 				else
@@ -31,6 +33,28 @@ public class TreeUtil {
 			} // else det: "the" name, amod: "last" name, ...
 		}
 		return list;
+	}
+
+	public static cz.brmlab.yodaqa.model.alpino.type.constituent.NP widestCoveringAlpinoNP(Token t) {
+		cz.brmlab.yodaqa.model.alpino.type.constituent.NP bestnp = null;
+
+		for (cz.brmlab.yodaqa.model.alpino.type.constituent.NP np : JCasUtil
+				.selectCovering(cz.brmlab.yodaqa.model.alpino.type.constituent.NP.class, t))
+			if (bestnp == null || bestnp.getBegin() > np.getBegin() || bestnp.getEnd() < np.getEnd())
+				bestnp = np;
+
+		return bestnp;
+	}
+
+	public static cz.brmlab.yodaqa.model.alpino.type.constituent.NP shortestCoveringAlpinoNP(Token t) {
+		cz.brmlab.yodaqa.model.alpino.type.constituent.NP bestnp = null;
+
+		for (cz.brmlab.yodaqa.model.alpino.type.constituent.NP np : JCasUtil
+				.selectCovering(cz.brmlab.yodaqa.model.alpino.type.constituent.NP.class, t))
+			if (bestnp == null || bestnp.getEnd() - bestnp.getBegin() > np.getEnd() - np.getBegin())
+				bestnp = np;
+
+		return bestnp;
 	}
 
 	public static NP widestCoveringNP(Token t) {

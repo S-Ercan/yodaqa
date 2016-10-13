@@ -47,6 +47,7 @@ public class SyntaxCanonization extends JCasAnnotator_ImplBase {
 			text = text.replaceAll("\\W*$", "");
 			text = text.replaceAll("^\\W*", "");
 		}
+		text = text.replaceAll("^(?i)(de|het|een)\\s+", "");
 		text = text.replaceAll("^(?i)(the|a|an|one)\\s+", "");
 		text = text.replaceAll("(?i)\\s*'s$", "");
 		if (!text.matches("^\\W*$"))

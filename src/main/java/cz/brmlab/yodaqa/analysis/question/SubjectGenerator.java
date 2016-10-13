@@ -4,7 +4,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
+//import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.WHNP;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
@@ -25,6 +25,7 @@ import cz.brmlab.yodaqa.analysis.TreeUtil;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.Subject;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 
 /**
  * Subject annotations in a QuestionCAS. These represent key information
@@ -48,17 +49,17 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 	}
 
 	protected void processSentence(JCas jcas, Constituent sentence) throws AnalysisEngineProcessException {
-		for (Token token : JCasUtil.selectCovered(Token.class, sentence))
-			if (token.getPos().getPosValue().equals("N"))
-				processSubj(jcas, token);
-		for (Token subj : JCasUtil.select(jcas, Token.class)) {
-			if (subj.getPos().getPosValue().equals("N"))
-				processSubj(jcas, subj);
-		}
-		for (NSUBJ subj : JCasUtil.selectCovered(NSUBJ.class, sentence))
-			processSubj(jcas, subj);
-		for (NSUBJPASS subj : JCasUtil.selectCovered(NSUBJPASS.class, sentence))
-			processSubj(jcas, subj);
+//		for (Token token : JCasUtil.selectCovered(Token.class, sentence))
+//			if (token.getPos().getPosValue().equals("N"))
+//				processSubj(jcas, token);
+//		for (Token subj : JCasUtil.select(jcas, Token.class)) {
+//			if (subj.getPos().getPosValue().equals("N"))
+//				processSubj(jcas, subj);
+//		}
+//		for (NSUBJ subj : JCasUtil.selectCovered(NSUBJ.class, sentence))
+//			processSubj(jcas, subj);
+//		for (NSUBJPASS subj : JCasUtil.selectCovered(NSUBJPASS.class, sentence))
+//			processSubj(jcas, subj);
 		
 		for (SU subj : JCasUtil.select(jcas, SU.class)) {
 			processSubj(jcas, subj);
@@ -113,7 +114,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		/* (Adding just the token, e.g. "capital", above too also makes
 		 * sense as it can be treated as reliable compared to the full
 		 * phrase which may not be in the text word-by-word.) */
-		NP np = TreeUtil.widestCoveringNP(stok);
+		NP np = TreeUtil.widestCoveringAlpinoNP(stok);
 		if (np == null) {
 			// <<How long before bankruptcy is removed from a credit report?>>
 			return;
@@ -135,7 +136,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		/* Also generate subject for the shortest covering NP, which is
 		 * often just a very specific phrase like 'main character' or
 		 * 'middle name', useful as e.g. a property selector. */
-		NP npShort = TreeUtil.shortestCoveringNP(stok);
+		NP npShort = TreeUtil.shortestCoveringAlpinoNP(stok);
 		if (npShort != np && !npShort.getCoveredText().equals(genSubject)) {
 			/* XXX: Blacklisting "name" in "the name of XYZ".
 			 * We probably don't need a sophisticated name
@@ -193,7 +194,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		/* (Adding just the token, e.g. "capital", above too also makes
 		 * sense as it can be treated as reliable compared to the full
 		 * phrase which may not be in the text word-by-word.) */
-		NP np = TreeUtil.widestCoveringNP(stok);
+		NP np = TreeUtil.widestCoveringAlpinoNP(stok);
 		if (np == null) {
 			// <<How long before bankruptcy is removed from a credit report?>>
 			return;
@@ -215,7 +216,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		/* Also generate subject for the shortest covering NP, which is
 		 * often just a very specific phrase like 'main character' or
 		 * 'middle name', useful as e.g. a property selector. */
-		NP npShort = TreeUtil.shortestCoveringNP(stok);
+		NP npShort = TreeUtil.shortestCoveringAlpinoNP(stok);
 		if (npShort != np && !npShort.getCoveredText().equals(genSubject)) {
 			/* XXX: Blacklisting "name" in "the name of XYZ".
 			 * We probably don't need a sophisticated name

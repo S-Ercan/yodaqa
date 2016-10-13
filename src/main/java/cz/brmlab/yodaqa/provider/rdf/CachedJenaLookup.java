@@ -144,12 +144,13 @@ public abstract class CachedJenaLookup {
 	 * fallback.  Cooked means without the leading "the", etc. */
 	public static List<String> cookedTitles(String title) {
 		List<String> titles = new LinkedList<String>();
-		titles.add(title); // by default, try non-cooked
 
 		/* Syntax cooked will drop leading the-, a-, etc. */
 		String canonTitle = SyntaxCanonization.getCanonText(title);
 		if (!canonTitle.equals(title) && !canonTitle.matches("^\\s*$"))
 			titles.add(canonTitle);
+
+		titles.add(title); // as a last attempty, try non-cooked
 
 		return titles;
 	}
