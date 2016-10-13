@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -150,13 +152,12 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		}
 
 		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, catNode, relNode, posNode;
-		beginNode = endNode = catNode = relNode = posNode = null;
+		Node beginNode, endNode, catNode, posNode;
+		beginNode = endNode = catNode = posNode = null;
 		if (attrs != null) {
 			beginNode = attrs.getNamedItem("begin");
 			endNode = attrs.getNamedItem("end");
 			catNode = attrs.getNamedItem("cat");
-			relNode = attrs.getNamedItem("rel");
 			posNode = attrs.getNamedItem("pos");
 		}
 
@@ -166,10 +167,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		int nodeBeginIndex = tokenList.get(firstTokenIndex).getBegin();
 		int nodeEndIndex = tokenList.get(lastTokenIndex).getEnd();
 		IntPair span = new IntPair(nodeBeginIndex, nodeEndIndex);
-
-		if (relNode != null) {
-			// TODO: process dependencies
-		}
 
 		if (catNode != null) {
 			// add annotation to annotation tree
@@ -221,9 +218,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			}
 
 			return token;
-		} else if (relNode == null) {
-			// throw new IllegalArgumentException("Node must have a category,
-			// POS, or rel label.");
 		}
 		return null;
 	}
@@ -386,7 +380,13 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	}
 
 	private void processDependencyTriples(String output) {
-
+		for (String triple : output.split("\n")) {
+			Pattern pattern = Pattern.compile("(.+)[\\|]{1}(.+)[\\|]{1}(.+)[\\|]{1}");
+			Matcher matcher = pattern.matcher(triple);
+			if (matcher.find()) {
+				System.out.println(matcher.group(1) + ", " + matcher.group(2) + ", " + matcher.group(3));
+			}
+		}
 	}
 
 	public JCas getJCas() {
