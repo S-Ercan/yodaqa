@@ -48,6 +48,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import edu.stanford.nlp.util.IntPair;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
@@ -384,7 +385,37 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			Pattern pattern = Pattern.compile("(.+)[\\|]{1}(.+)[\\|]{1}(.+)[\\|]{1}");
 			Matcher matcher = pattern.matcher(triple);
 			if (matcher.find()) {
-				System.out.println(matcher.group(1) + ", " + matcher.group(2) + ", " + matcher.group(3));
+				String governorString = matcher.group(1);
+				if (governorString.equals("top/top")) {
+					continue;
+				}
+				String dependencyString = matcher.group(2).split("/")[1];
+				String dependentString = matcher.group(3);
+
+				String aDependencyType = dependencyString;
+				String dependencyTypeName = "cz.brmlab.yodaqa.model.alpino.type.dependency."
+						+ aDependencyType.toUpperCase();
+
+				Type type = jCas.getTypeSystem().getType(dependencyTypeName);
+				if (type == null) {
+					type = JCasUtil.getType(jCas, Dependency.class);
+				}
+
+				Pattern digitPattern = Pattern.compile("\\d+");
+				Matcher digitMatcher = digitPattern.matcher(governorString);
+				digitMatcher.find();
+				int governorIndex = Integer.valueOf(digitMatcher.group());
+				digitMatcher = digitPattern.matcher(dependentString);
+				digitMatcher.find();
+				int dependentIndex = Integer.valueOf(digitMatcher.group());
+
+				Dependency dep = (Dependency) jCas.getCas().createFS(type);
+				dep.setDependencyType(aDependencyType.toString());
+				dep.setGovernor(tokenList.get(governorIndex));
+				dep.setDependent(tokenList.get(dependentIndex));
+				dep.setBegin(dep.getDependent().getBegin());
+				dep.setEnd(dep.getDependent().getEnd());
+				dep.addToIndexes();
 			}
 		}
 	}
