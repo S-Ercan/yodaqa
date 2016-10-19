@@ -64,6 +64,11 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	private PrintWriter parseOut;
 	private BufferedReader parseIn;
 
+	private String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
+	private String constituentPackage = alpinoModelsPackage + ".constituent";
+	private String dependencyPackage = alpinoModelsPackage + ".dependency";
+	private String posPackage = alpinoModelsPackage + ".pos";
+
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 		tokenList = new ArrayList<Token>();
@@ -225,70 +230,27 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	public Constituent createConstituentAnnotation(int aBegin, int aEnd, String aConstituentType,
 			String aSyntacticFunction) {
-		// Type constType =
-		// constituentMappingProvider.getTagType(aConstituentType);
-		Type constType = getConstituentType(aConstituentType);
-
+		Type constType;
+		if (aConstituentType.equals("top")) {
+			constType = getJCas().getTypeSystem().getType(ROOT.class.getName());
+		} else {
+			constType = getJCas().getTypeSystem().getType(constituentPackage + "." + aConstituentType.toUpperCase());
+		}
 		Constituent constAnno = (Constituent) jCas.getCas().createAnnotation(constType, aBegin, aEnd);
 		constAnno.setConstituentType(aConstituentType);
 		constAnno.setSyntacticFunction(aSyntacticFunction);
+
 		return constAnno;
 	}
 
 	public POS createPOSAnnotation(int aBegin, int aEnd, String aPosType) {
-		// Type type = posMappingProvider.getTagType(aPosType);
-		Type type = getPOSType(aPosType);
-
+		Type type = getJCas().getTypeSystem().getType(posPackage + "." + aPosType.toUpperCase());
 		// create instance of the desired type
 		POS anno = (POS) jCas.getCas().createAnnotation(type, aBegin, aEnd);
-
 		// save original (unmapped) postype in feature
 		anno.setPosValue(aPosType);
 
 		return anno;
-	}
-
-	private Type getConstituentType(String constituentType) {
-		switch (constituentType) {
-		case "top":
-			constituentType = ROOT.class.getName();
-			break;
-		case "whq":
-			constituentType = WHQ.class.getName();
-			break;
-		case "sv1":
-			constituentType = SV1.class.getName();
-			break;
-		case "np":
-			constituentType = NP.class.getName();
-			break;
-		default:
-			constituentType = Constituent.class.getName();
-		}
-		return getJCas().getTypeSystem().getType(constituentType);
-	}
-
-	private Type getPOSType(String posType) {
-		switch (posType) {
-		case "adj":
-			posType = ADJ.class.getName();
-			break;
-		case "verb":
-			posType = VERB.class.getName();
-			break;
-		case "det":
-			posType = DET.class.getName();
-			break;
-		case "name":
-			posType = NAME.class.getName();
-			break;
-		case "punct":
-			posType = PUNCT.class.getName();
-			break;
-		default:
-			posType = POS.class.getName();
-		}
-		return getJCas().getTypeSystem().getType(posType);
 	}
 
 	private String getDependencyOutput(String sentence) throws IOException {
@@ -303,7 +265,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			@Override
 			public void run() {
 				PrintWriter out = new PrintWriter(process.getOutputStream());
-				out.println("Wat is een robot?");
+				out.println(sentence);
 				out.flush();
 				out.close();
 			}
@@ -382,7 +344,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	private void processDependencyTriples(String output) {
 		for (String triple : output.split("\n")) {
-			Pattern pattern = Pattern.compile("(.+)[\\|]{1}(.+)[\\|]{1}(.+)[\\|]{1}");
+			Pattern pattern = Pattern.compile("(.+)[\\|](.+)[\\|](.+)[\\|]");
 			Matcher matcher = pattern.matcher(triple);
 			if (matcher.find()) {
 				String governorString = matcher.group(1);
@@ -393,8 +355,8 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				String dependentString = matcher.group(3);
 
 				String aDependencyType = dependencyString;
-				String dependencyTypeName = "cz.brmlab.yodaqa.model.alpino.type.dependency."
-						+ aDependencyType.toUpperCase();
+				String dependencyTypeName = dependencyPackage + "." + aDependencyType.toUpperCase();
+				System.out.println(dependencyTypeName);
 
 				Type type = jCas.getTypeSystem().getType(dependencyTypeName);
 				if (type == null) {

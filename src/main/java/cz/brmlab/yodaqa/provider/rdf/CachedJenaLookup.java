@@ -150,7 +150,7 @@ public abstract class CachedJenaLookup {
 		if (!canonTitle.equals(title) && !canonTitle.matches("^\\s*$"))
 			titles.add(canonTitle);
 
-		titles.add(title); // as a last attempty, try non-cooked
+		titles.add(title); // as a last attempt, try non-cooked
 
 		return titles;
 	}
