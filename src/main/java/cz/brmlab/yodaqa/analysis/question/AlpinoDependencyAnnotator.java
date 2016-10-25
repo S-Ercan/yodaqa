@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -138,10 +139,11 @@ public class AlpinoDependencyAnnotator {
 		}
 	}
 
-	public void processDependencyTriples(JCas jCas, String output) {
+	public List<Dependency> processDependencyTriples(JCas jCas, String output) {
+		ArrayList<Dependency> dependencies = new ArrayList<Dependency>();
 		if (output == null || output.equals("")) {
 			System.out.println("No dependency triples received");
-			return;
+			return dependencies;
 		}
 		for (String triple : output.split("\n")) {
 			Pattern pattern = Pattern.compile("(.+)[\\|](.+)[\\|](.+)[\\|]");
@@ -178,7 +180,9 @@ public class AlpinoDependencyAnnotator {
 				dep.setBegin(dependent.getBegin());
 				dep.setEnd(dependent.getEnd());
 				dep.addToIndexes();
+				dependencies.add(dep);
 			}
 		}
+		return dependencies;
 	}
 }

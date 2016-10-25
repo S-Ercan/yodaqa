@@ -31,6 +31,7 @@ import org.xml.sax.SAXParseException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
 
@@ -47,18 +48,23 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		try {
-			parseSocket = new Socket(hostName, parsePortNumber);
-			parseOut = new PrintWriter(parseSocket.getOutputStream(), true);
-			parseIn = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.getType(aJCas, Sentence.class))
 				.iterator();
 
 		while (typeToParseIterator.hasNext()) {
+			try {
+				// TODO: initializing this once (which should be done) leads to
+				// problems in case typeToParseIterator does have multiple
+				// entries; figure out a fix so we don't have to reinitialize
+				// this on every iteration
+				parseSocket = new Socket(hostName, parsePortNumber);
+				parseOut = new PrintWriter(parseSocket.getOutputStream(), true);
+				parseIn = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 			List<Token> tokenList = new ArrayList<Token>();
 			Annotation currAnnotationToParse = typeToParseIterator.next();
 			// Combine tokens into sentence
@@ -80,35 +86,47 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				System.out.println("No parse tree for the following sentence was received: " + sentence);
 				continue;
 			}
-			annotateConstituents(tokenList, parseTree.getDocumentElement());
-			// annotateDependencies(tokenList);
+			Annotation annotation = annotateConstituents(tokenList, parseTree.getDocumentElement());
+			List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
+			System.out.println(annotation + ", " + dependencies);
+		}
+		if (parseSocket != null) {
+			try {
+				parseSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
-	private void annotateConstituents(List<Token> tokenList, Node treeNode) {
+	private Annotation annotateConstituents(List<Token> tokenList, Node treeNode) {
 		AlpinoConstituentAnnotator annotator;
+		Annotation annotation = null;
 		try {
 			annotator = new AlpinoConstituentAnnotator(tokenList);
-			annotator.createConstituentAnnotationFromTree(treeNode, null, true);
+			annotation = annotator.createConstituentAnnotationFromTree(treeNode, null, true);
 		} catch (CASException e) {
 			e.printStackTrace();
 		}
+		return annotation;
 	}
 
-	private void annotateDependencies(List<Token> tokenList) {
+	private List<Dependency> annotateDependencies(JCas aJCas, String sentence, List<Token> tokenList) {
 		AlpinoDependencyAnnotator depAnnotator;
+		List<Dependency> dependencies = null;
 		try {
 			depAnnotator = new AlpinoDependencyAnnotator(tokenList);
 			String dependencyOutput;
-			// try {
-			// dependencyOutput = depAnnotator.getDependencyOutput(sentence);
-			// depAnnotator.processDependencyTriples(aJCas, dependencyOutput);
-			// } catch (IOException e) {
-			// e.printStackTrace();
-			// }
+			try {
+				dependencyOutput = depAnnotator.getDependencyOutput(sentence);
+				dependencies = depAnnotator.processDependencyTriples(aJCas, dependencyOutput);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} catch (CASException e) {
 			e.printStackTrace();
 		}
+		return dependencies;
 	}
 
 	private String getParseOutput(String sentence) {
@@ -119,7 +137,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			while ((line = parseIn.readLine()) != null) {
 				output += line;
 			}
-			parseSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
