@@ -14,6 +14,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
@@ -60,13 +61,14 @@ public class AlpinoConstituentAnnotator {
 		}
 
 		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, catNode, posNode;
-		beginNode = endNode = catNode = posNode = null;
+		Node beginNode, endNode, catNode, posNode, lemmaNode;
+		beginNode = endNode = catNode = posNode = lemmaNode = null;
 		if (attrs != null) {
 			beginNode = attrs.getNamedItem("begin");
 			endNode = attrs.getNamedItem("end");
 			catNode = attrs.getNamedItem("cat");
 			posNode = attrs.getNamedItem("pos");
+			lemmaNode = attrs.getNamedItem("lemma");
 		}
 
 		int firstTokenIndex = Integer.parseInt(beginNode.getNodeValue());
@@ -125,6 +127,11 @@ public class AlpinoConstituentAnnotator {
 			if (aParentFS != null) {
 				token.setParent(aParentFS);
 			}
+			
+			Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
+			lemmaAnno.setValue(lemmaNode.getNodeValue());
+			jCas.addFsToIndexes(lemmaAnno);
+			token.setLemma(lemmaAnno);
 
 			return token;
 		}

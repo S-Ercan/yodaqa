@@ -17,6 +17,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
 import org.apache.uima.cas.FSIterator;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.util.JCasUtil;
@@ -87,8 +88,13 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				continue;
 			}
 			Annotation annotation = annotateConstituents(tokenList, parseTree.getDocumentElement());
-			List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
-			System.out.println(annotation + ", " + dependencies);
+			try {
+				JCas ppView = aJCas.getView("PickedPassages");
+			} catch (CASRuntimeException e) {
+				List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
+			} catch (CASException e) {
+				e.printStackTrace();
+			}
 		}
 		if (parseSocket != null) {
 			try {

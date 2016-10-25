@@ -1,16 +1,5 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
-import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
-//import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.WHNP;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.NSUBJ;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.NSUBJPASS;
-
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -24,8 +13,14 @@ import org.slf4j.LoggerFactory;
 import cz.brmlab.yodaqa.analysis.TreeUtil;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.Subject;
-import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.WHNP;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 
 /**
  * Subject annotations in a QuestionCAS. These represent key information stored
