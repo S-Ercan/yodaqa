@@ -19,18 +19,17 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import edu.stanford.nlp.util.IntPair;
 
-public class AlpinoAnnotator {
+public class AlpinoConstituentAnnotator {
 
 	private String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
 	private String constituentPackage = alpinoModelsPackage + ".constituent";
-	private String dependencyPackage = alpinoModelsPackage + ".dependency";
 	private String posPackage = alpinoModelsPackage + ".pos";
 
 	private JCas jCas = null;
 
 	private List<Token> tokenList;
 
-	public AlpinoAnnotator(List<Token> tokenList) throws CASException {
+	public AlpinoConstituentAnnotator(List<Token> tokenList) throws CASException {
 		setTokenList(tokenList);
 		setJCas(tokenList.get(0).getCAS().getJCas());
 	}
@@ -53,25 +52,6 @@ public class AlpinoAnnotator {
 
 	public Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS, boolean aCreatePos) {
 		if (!aNode.getNodeName().equals("node")) {
-			// NamedNodeMap attrs = aNode.getAttributes();
-			// if (attrs != null) {
-			// System.out.println("\n" + attrs.getNamedItem("begin") + ", " +
-			// attrs.getNamedItem("end") + ", "
-			// + attrs.getNamedItem("rel"));
-			// Node word = attrs.getNamedItem("word");
-			// Node pos = attrs.getNamedItem("pos");
-			// Node lemma = attrs.getNamedItem("lemma");
-			// if (word != null) {
-			// System.out.println(word + ", " + pos + ", " + lemma);
-			// }
-			// }
-			// } else {
-			// NodeList children = aNode.getChildNodes();
-			// for (int i = 0; i < children.getLength(); i++) {
-			// createConstituentAnnotationFromTree(children.item(i), null,
-			// true);
-			// }
-			// return null;
 			if (aNode.getChildNodes().getLength() > 0) {
 				return createConstituentAnnotationFromTree(aNode.getChildNodes().item(1), null, true);
 			} else {
@@ -95,11 +75,6 @@ public class AlpinoAnnotator {
 		int nodeBeginIndex = token.getBegin();
 		int nodeEndIndex = getTokenList().get(lastTokenIndex).getEnd();
 
-		if (nodeBeginIndex == 0 && nodeEndIndex == 0) {
-			System.out.println();
-		}
-
-		// TODO: sometimes getting nodeBeginIndex == 0 && nodeEndIndex == 0
 		IntPair span = new IntPair(nodeBeginIndex, nodeEndIndex);
 
 		if (catNode != null) {
@@ -118,12 +93,6 @@ public class AlpinoAnnotator {
 				Annotation childAnnotation = createConstituentAnnotationFromTree(childNodes.item(i), constituent,
 						aCreatePos);
 				if (childAnnotation != null) {
-					// System.out.println("childAnnotation: " +
-					// childAnnotation.getCoveredText());
-					// TODO: this happens and it shouldn't
-					if (!jCas.getCas().equals(childAnnotation.getCAS())) {
-						System.out.println();
-					}
 					childAnnotations.add(childAnnotation);
 				}
 			}
@@ -149,11 +118,6 @@ public class AlpinoAnnotator {
 			// only add POS to index if we want POS-tagging
 			if (aCreatePos) {
 				jCas.addFsToIndexes(pos);
-				if (!token.getCAS().equals(pos.getCAS())) {
-					System.out.println("Incorrect: " + jCas.getCas() + ", " + token.getCAS() + ", " + pos.getCAS());
-				} else {
-					System.out.println("Correct: " + jCas.getCas() + ", " + token.getCAS() + ", " + pos.getCAS());
-				}
 				token.setPos(pos);
 			}
 
