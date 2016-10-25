@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.Socket;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,39 +22,26 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.cas.FeatureStructure;
+import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
+import org.apache.uima.cas.FSIterator;
 import org.apache.uima.cas.Type;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
-import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
-import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
-import cz.brmlab.yodaqa.model.alpino.type.constituent.WHQ;
-import cz.brmlab.yodaqa.model.alpino.type.pos.ADJ;
-import cz.brmlab.yodaqa.model.alpino.type.pos.DET;
-import cz.brmlab.yodaqa.model.alpino.type.pos.NAME;
-import cz.brmlab.yodaqa.model.alpino.type.pos.PUNCT;
-import cz.brmlab.yodaqa.model.alpino.type.pos.VERB;
-import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import edu.stanford.nlp.util.IntPair;
+import edu.stanford.nlp.ling.HasWord;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
-
-	private JCas jCas = null;
 
 	private List<Token> tokenList;
 
@@ -71,11 +59,25 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
-		tokenList = new ArrayList<Token>();
+		setTokenList(new ArrayList<Token>());
 	}
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
+		JCas questionView, passagesView;
+		questionView = passagesView = null;
+		try {
+			questionView = aJCas.getView("Question");
+			passagesView = aJCas.getView("PickedPassages");
+		} catch (CASException e) {
+			System.out.println("Not yet...");
+		} catch (CASRuntimeException e) {
+			System.out.println("Not yet...");
+		}
+
+		System.out.println(questionView);
+		System.out.println(passagesView);
+
 		try {
 			parseSocket = new Socket(hostName, parsePortNumber);
 			parseOut = new PrintWriter(parseSocket.getOutputStream(), true);
@@ -84,24 +86,46 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			e.printStackTrace();
 		}
 
-		setJCas(aJCas);
-		// Combine tokens into sentence
-		String sentence = "";
-		String text;
-		for (Token token : JCasUtil.select(jCas, Token.class)) {
-			text = token.getCoveredText();
-			tokenList.add(token);
-			sentence += text + ' ';
-		}
-		// Get parse tree and dependency triples
-		String parseOutput = getParseOutput(sentence);
-		processParseTree(parseOutput);
-		String dependencyOutput;
-		try {
-			dependencyOutput = getDependencyOutput(sentence);
-			processDependencyTriples(dependencyOutput);
-		} catch (IOException e) {
-			e.printStackTrace();
+		// setJCas(aJCas);
+		FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.getType(aJCas, Sentence.class))
+				.iterator();
+
+		while (typeToParseIterator.hasNext()) {
+			Annotation currAnnotationToParse = typeToParseIterator.next();
+			// Split sentence to tokens for annotating indexes
+			// Combine tokens into sentence
+			String sentence = "";
+			String text;
+			for (Token token : JCasUtil.selectCovered(Token.class, currAnnotationToParse)) {
+				tokenList.add(token);
+				text = token.getCoveredText();
+				text = Normalizer.normalize(text, Normalizer.Form.NFD);
+				sentence += text + ' ';
+			}
+			if (sentence.equals("")) {
+				continue;
+			}
+			// Get parse tree and dependency triples
+			String parseOutput = getParseOutput(sentence);
+			Document parseTree = processParseTree(parseOutput);
+			if (parseTree == null) {
+				System.out.println("No parse tree for the following sentence was received: " + sentence);
+				continue;
+			}
+			AlpinoAnnotator annotator;
+			try {
+				annotator = new AlpinoAnnotator(getTokenList());
+				annotator.createConstituentAnnotationFromTree(parseTree.getDocumentElement(), null, true);
+			} catch (CASException e) {
+				e.printStackTrace();
+			}
+			// String dependencyOutput;
+			// try {
+			// dependencyOutput = getDependencyOutput(sentence);
+			// processDependencyTriples(dependencyOutput);
+			// } catch (IOException e) {
+			// e.printStackTrace();
+			// }
 		}
 	}
 
@@ -120,137 +144,24 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		return output;
 	}
 
-	private void processParseTree(String parseOutput) {
+	private Document processParseTree(String parseOutput) {
+		Document parseTree = null;
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-			Document parseTree = dBuilder.parse(new InputSource(new StringReader(parseOutput)));
+			parseTree = dBuilder.parse(new InputSource(new StringReader(parseOutput)));
 			parseTree.getDocumentElement().normalize();
-			createConstituentAnnotationFromTree(parseTree.getDocumentElement(), null, true);
+			return parseTree;
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
+		} catch (SAXParseException e) {
+			System.err.println("Could not parse string.");
 		} catch (SAXException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS, boolean aCreatePos) {
-		if (aNode.getNodeName().equals("node")) {
-			NamedNodeMap attrs = aNode.getAttributes();
-			if (attrs != null) {
-				System.out.println("\n" + attrs.getNamedItem("begin") + ", " + attrs.getNamedItem("end") + ", "
-						+ attrs.getNamedItem("rel"));
-				Node word = attrs.getNamedItem("word");
-				Node pos = attrs.getNamedItem("pos");
-				Node lemma = attrs.getNamedItem("lemma");
-				if (word != null) {
-					System.out.println(word + ", " + pos + ", " + lemma);
-				}
-			}
-		} else {
-			NodeList children = aNode.getChildNodes();
-			for (int i = 0; i < children.getLength(); i++) {
-				createConstituentAnnotationFromTree(children.item(i), null, true);
-			}
-			return null;
-		}
-
-		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, catNode, posNode;
-		beginNode = endNode = catNode = posNode = null;
-		if (attrs != null) {
-			beginNode = attrs.getNamedItem("begin");
-			endNode = attrs.getNamedItem("end");
-			catNode = attrs.getNamedItem("cat");
-			posNode = attrs.getNamedItem("pos");
-		}
-
-		int firstTokenIndex = Integer.parseInt(beginNode.getNodeValue());
-		int lastTokenIndex = Integer.parseInt(endNode.getNodeValue()) - 1;
-		Token token = tokenList.get(firstTokenIndex);
-		int nodeBeginIndex = tokenList.get(firstTokenIndex).getBegin();
-		int nodeEndIndex = tokenList.get(lastTokenIndex).getEnd();
-		IntPair span = new IntPair(nodeBeginIndex, nodeEndIndex);
-
-		if (catNode != null) {
-			// add annotation to annotation tree
-			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(),
-					catNode.getNodeValue(), null);
-			// link to parent
-			if (aParentFS != null) {
-				constituent.setParent(aParentFS);
-			}
-
-			// Do we have any children?
-			List<Annotation> childAnnotations = new ArrayList<Annotation>();
-			NodeList childNodes = aNode.getChildNodes();
-			for (int i = 0; i < childNodes.getLength(); i++) {
-				Annotation childAnnotation = createConstituentAnnotationFromTree(childNodes.item(i), constituent,
-						aCreatePos);
-				if (childAnnotation != null) {
-					childAnnotations.add(childAnnotation);
-				}
-			}
-
-			// Now that we know how many children we have, link annotation of
-			// current node with its children
-			FSArray children = new FSArray(jCas, childAnnotations.size());
-			int curChildNum = 0;
-			for (FeatureStructure child : childAnnotations) {
-				children.set(curChildNum, child);
-				curChildNum++;
-			}
-			constituent.setChildren(children);
-
-			// write annotation for current node to index
-			jCas.addFsToIndexes(constituent);
-
-			return constituent;
-		} else if (posNode != null) {
-			// create POS-annotation (annotation over the token)
-			POS pos = createPOSAnnotation(span.getSource(), span.getTarget(), posNode.getNodeValue());
-
-			// only add POS to index if we want POS-tagging
-			if (aCreatePos) {
-				jCas.addFsToIndexes(pos);
-				token.setPos(pos);
-			}
-
-			// link token to its parent constituent
-			if (aParentFS != null) {
-				token.setParent(aParentFS);
-			}
-
-			return token;
-		}
-		return null;
-	}
-
-	public Constituent createConstituentAnnotation(int aBegin, int aEnd, String aConstituentType,
-			String aSyntacticFunction) {
-		Type constType;
-		if (aConstituentType.equals("top")) {
-			constType = getJCas().getTypeSystem().getType(ROOT.class.getName());
-		} else {
-			constType = getJCas().getTypeSystem().getType(constituentPackage + "." + aConstituentType.toUpperCase());
-		}
-		Constituent constAnno = (Constituent) jCas.getCas().createAnnotation(constType, aBegin, aEnd);
-		constAnno.setConstituentType(aConstituentType);
-		constAnno.setSyntacticFunction(aSyntacticFunction);
-
-		return constAnno;
-	}
-
-	public POS createPOSAnnotation(int aBegin, int aEnd, String aPosType) {
-		Type type = getJCas().getTypeSystem().getType(posPackage + "." + aPosType.toUpperCase());
-		// create instance of the desired type
-		POS anno = (POS) jCas.getCas().createAnnotation(type, aBegin, aEnd);
-		// save original (unmapped) postype in feature
-		anno.setPosValue(aPosType);
-
-		return anno;
+		return parseTree;
 	}
 
 	private String getDependencyOutput(String sentence) throws IOException {
@@ -342,7 +253,11 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		}
 	}
 
-	private void processDependencyTriples(String output) {
+	private void processDependencyTriples(JCas jCas, String output) {
+		if (output == null || output.equals("")) {
+			System.out.println("No dependency triples received");
+			return;
+		}
 		for (String triple : output.split("\n")) {
 			Pattern pattern = Pattern.compile("(.+)[\\|](.+)[\\|](.+)[\\|]");
 			Matcher matcher = pattern.matcher(triple);
@@ -363,31 +278,47 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 					type = JCasUtil.getType(jCas, Dependency.class);
 				}
 
-				Pattern digitPattern = Pattern.compile("\\d+");
+				Pattern digitPattern = Pattern.compile(".+[\\[](\\d+)[,]");
 				Matcher digitMatcher = digitPattern.matcher(governorString);
 				digitMatcher.find();
-				int governorIndex = Integer.valueOf(digitMatcher.group());
+				int governorIndex = Integer.valueOf(digitMatcher.group(1));
 				digitMatcher = digitPattern.matcher(dependentString);
 				digitMatcher.find();
-				int dependentIndex = Integer.valueOf(digitMatcher.group());
+				int dependentIndex = Integer.valueOf(digitMatcher.group(1));
+
+				// if (governorIndex > tokenList.size() || dependentIndex >
+				// tokenList.size()) {
+				// System.out.println(governorIndex + ", " + dependentIndex);
+				// } else if (tokenList.get(governorIndex) == null ||
+				// tokenList.get(dependentIndex) == null) {
+				// System.out.println(governorIndex + ", " + dependentIndex);
+				// }
+
+				Token governor = getTokenList().get(governorIndex);
+				Token dependent = getTokenList().get(dependentIndex);
+
+				System.out.println(governor.getBegin());
+				System.out.println(governor.getEnd());
+				System.out.println(dependent.getBegin());
+				System.out.println(dependent.getEnd());
 
 				Dependency dep = (Dependency) jCas.getCas().createFS(type);
 				dep.setDependencyType(aDependencyType.toString());
-				dep.setGovernor(tokenList.get(governorIndex));
-				dep.setDependent(tokenList.get(dependentIndex));
-				dep.setBegin(dep.getDependent().getBegin());
-				dep.setEnd(dep.getDependent().getEnd());
+				dep.setGovernor(governor);
+				dep.setDependent(dependent);
+				dep.setBegin(dependent.getBegin());
+				dep.setEnd(dependent.getEnd());
 				dep.addToIndexes();
 			}
 		}
 	}
 
-	public JCas getJCas() {
-		return jCas;
+	public List<Token> getTokenList() {
+		return tokenList;
 	}
 
-	public void setJCas(JCas jCas) {
-		this.jCas = jCas;
+	public void setTokenList(List<Token> tokenList) {
+		this.tokenList = tokenList;
 	}
 
 }

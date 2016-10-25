@@ -50,6 +50,11 @@
 	      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent</supertypeName>
 		</typeDescription>
 		 <typeDescription>
+	      <name>cz.brmlab.yodaqa.model.alpino.type.constituent.MWU</name>
+	      <description/>
+	      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent</supertypeName>
+		</typeDescription>
+		 <typeDescription>
 	      <name>cz.brmlab.yodaqa.model.alpino.type.constituent.NP</name>
 	      <description/>
 	      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent</supertypeName>

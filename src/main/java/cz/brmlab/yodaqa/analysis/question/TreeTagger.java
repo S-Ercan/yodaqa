@@ -325,6 +325,7 @@ public class TreeTagger extends JCasAnnotator_ImplBase {
 		posToTag.put("det__rel", PR.class.getName());
 		posToTag.put("prep", PP.class.getName());
 		posToTag.put("prep_abbr", PP.class.getName());
+		posToTag.put("punc", PUNC.class.getName());
 
 		posToTag.put("nounsg", N.class.getName());
 		posToTag.put("nounpl", N.class.getName());

@@ -97,11 +97,11 @@ public class DBpediaTitles extends DBpediaLookup {
 	public List<Article> query(String title, Logger logger) {
 		for (String titleForm : cookedTitles(title)) {
 			List<Article> fuzzyLookupEntities;
-			List<Article> crossWikiEntities;
+			List<Article> crossWikiEntities = new ArrayList<Article>();
 			while (true) {
 				try {
 					fuzzyLookupEntities = queryFuzzyLookup(titleForm, logger);
-					crossWikiEntities = queryCrossWikiLookup(titleForm, logger);
+//					crossWikiEntities = queryCrossWikiLookup(titleForm, logger);
 					break; // Success!
 				} catch (IOException e) {
 					e.printStackTrace();
