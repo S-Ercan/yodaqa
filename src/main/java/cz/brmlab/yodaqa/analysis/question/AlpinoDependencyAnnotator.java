@@ -12,6 +12,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.cas.Type;
 import org.apache.uima.fit.util.JCasUtil;
@@ -51,11 +52,12 @@ public class AlpinoDependencyAnnotator {
 	}
 
 	public String getDependencyOutput(String sentence) throws IOException {
+		String alpinoHome = System.getenv("ALPINO_HOME");
+		if (alpinoHome == null) {
+			throw new NullArgumentException("No \"ALPINO_HOME\" environment variable is specified.");
+		}
 		ProcessBuilder builder = new ProcessBuilder("/bin/bash", "bin/Alpino", "end_hook=triples", "-parse", "-notk");
-		builder.directory(new File("/home/selman/Software/Libraries/Alpino/"));
-		Map<String, String> env = builder.environment();
-		env.put("ALPINO_HOME", "/home/selman/Software/Libraries/Alpino/");
-
+		builder.directory(new File(alpinoHome));
 		final Process process = builder.start();
 
 		Thread inThread = new Thread() {

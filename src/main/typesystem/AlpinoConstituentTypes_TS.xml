@@ -5,7 +5,6 @@
     <version>1.0</version>
     <vendor>yodaqa</vendor>
   	<imports>
-      <import name="desc.type.LexicalUnits"/>
       <import location="file:/home/selman/Software/Git/QA/dkpro-core/dkpro-core-api-syntax-asl/src/main/resources/desc/type/Constituency.xml"/>
     </imports>
     <types>
