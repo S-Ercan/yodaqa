@@ -6,11 +6,13 @@ import vu.wntools.wnsimilarity.main.WordSim;
 import vu.wntools.wordnet.WordnetData;
 import vu.wntools.wordnet.WordnetLmfSaxParser;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.slf4j.Logger;
@@ -42,8 +44,14 @@ public class DutchWordnetPropertyScorer {
 	}
 
 	private DutchWordnetPropertyScorer() {
+		String odwnResources = System.getenv("ODWN_RESOURCES");
+		if (odwnResources == null) {
+			throw new NullArgumentException("No \"ODWN_RESOURCES\" environment variable is specified.");
+		}
+
 		WordnetLmfSaxParser parser = new WordnetLmfSaxParser();
-		parser.parseFile("/home/selman/Software/Git/QA/OpenDutchWordnet/resources/odwn/odwn_orbn_gwg-LMF.xml");
+		String odwnResourcesPath = Paths.get(odwnResources, "odwn_orbn_gwg-LMF_1.3.xml").toString();
+		parser.parseFile(odwnResourcesPath);
 		wordnetData = parser.wordnetData;
 	}
 
