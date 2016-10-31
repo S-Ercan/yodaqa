@@ -5,8 +5,7 @@
     <version>1.0</version>
     <vendor>yodaqa</vendor>
   <imports>
-      <import name="desc.type.LexicalUnits"/>
-      <import location="file:/home/selman/Software/Git/QA/dkpro-core/dkpro-core-api-syntax-asl/src/main/resources/desc/type/Dependency.xml"/>
+      <import name="desc.type.Dependency_customized"/>
   </imports>
   <types>
     <typeDescription>

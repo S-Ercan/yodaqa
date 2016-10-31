@@ -5,7 +5,7 @@
     <version>1.0</version>
     <vendor>yodaqa</vendor>
   	<imports>
-      <import location="file:/home/selman/Software/Git/QA/dkpro-core/dkpro-core-api-syntax-asl/src/main/resources/desc/type/Constituency.xml"/>
+      <import name="desc.type.Constituency"/>
     </imports>
     <types>
        <typeDescription>
