@@ -14,7 +14,7 @@ import cz.brmlab.yodaqa.analysis.ansscore.AnswerFV;
 import cz.brmlab.yodaqa.model.Question.Clue;
 import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import cz.brmlab.yodaqa.model.SearchResult.ResultInfo;
-import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.N;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 
 /**
  * Create CandidateAnswers for all NP constituents (noun phrases) that do not
@@ -48,8 +48,8 @@ public class CanByNPSurprise extends CandidateGenerator {
 
 		ResultInfo ri = JCasUtil.selectSingle(resultView, ResultInfo.class);
 
-//		for (NP np : JCasUtil.select(passagesView, NP.class)) {
-		for (N np : JCasUtil.select(passagesView, N.class)) {
+		for (NP np : JCasUtil.select(passagesView, NP.class)) {
+//		for (N np : JCasUtil.select(passagesView, N.class)) {
 			String text = np.getCoveredText();
 
 			/* TODO: This can be optimized a lot. */

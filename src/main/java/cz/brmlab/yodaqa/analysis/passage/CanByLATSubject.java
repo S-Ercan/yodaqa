@@ -19,8 +19,6 @@ import cz.brmlab.yodaqa.model.TyCor.LAT;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.NSUBJ;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.NSUBJPASS;
 
 /**
  * Create CandidateAnswer for the largest NP covering governor of
@@ -65,11 +63,6 @@ public class CanByLATSubject extends CandidateGenerator {
 		}
 
 		ResultInfo ri = JCasUtil.selectSingle(resultView, ResultInfo.class);
-
-		for (NSUBJ nsubj : JCasUtil.select(passagesView, NSUBJ.class))
-			processSubject(questionView, passagesView, ri, nsubj);
-		for (NSUBJPASS nsubj : JCasUtil.select(passagesView, NSUBJPASS.class))
-			processSubject(questionView, passagesView, ri, nsubj);
 		for (SU subj : JCasUtil.select(passagesView, SU.class))
 			processSubject(questionView, passagesView, ri, subj);
 	}

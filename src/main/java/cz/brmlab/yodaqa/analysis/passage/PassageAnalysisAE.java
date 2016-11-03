@@ -1,21 +1,17 @@
 package cz.brmlab.yodaqa.analysis.passage;
 
 import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolLemmatizer;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.fit.component.CasDumpWriter;
 import org.apache.uima.fit.factory.AggregateBuilder;
-import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.analysis.PipelineLogger;
-import cz.brmlab.yodaqa.analysis.passage.biotagger.CanByBIOTaggerAE;
 import cz.brmlab.yodaqa.analysis.question.AlpinoParser;
-import cz.brmlab.yodaqa.analysis.question.TreeTagger;
 import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createPrimitiveDescription;

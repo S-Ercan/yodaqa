@@ -88,10 +88,11 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				continue;
 			}
 			Annotation annotation = annotateConstituents(tokenList, parseTree.getDocumentElement());
+			List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
 			try {
 				JCas ppView = aJCas.getView("PickedPassages");
 			} catch (CASRuntimeException e) {
-				List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
+//				List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
 			} catch (CASException e) {
 				e.printStackTrace();
 			}
@@ -136,6 +137,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	}
 
 	private String getParseOutput(String sentence) {
+            // TODO: investigate passing all sentences off at once during answer analysis.
 		parseOut.println(sentence);
 		String line;
 		String output = "";

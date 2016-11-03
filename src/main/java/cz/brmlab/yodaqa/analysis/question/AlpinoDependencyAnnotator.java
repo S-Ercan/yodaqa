@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,24 +22,13 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 
 public class AlpinoDependencyAnnotator {
 
-	private JCas jCas = null;
-
 	private List<Token> tokenList;
 
-	private String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
-	private String dependencyPackage = alpinoModelsPackage + ".dependency";
+	private final String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
+	private final String dependencyPackage = alpinoModelsPackage + ".dependency";
 
 	public AlpinoDependencyAnnotator(List<Token> tokenList) throws CASException {
 		setTokenList(tokenList);
-		setJCas(tokenList.get(0).getCAS().getJCas());
-	}
-
-	public JCas getJCas() {
-		return jCas;
-	}
-
-	public void setJCas(JCas aJCas) {
-		jCas = aJCas;
 	}
 
 	public List<Token> getTokenList() {
@@ -78,19 +66,7 @@ public class AlpinoDependencyAnnotator {
 		Thread err = new Thread() {
 			@Override
 			public void run() {
-				InputStreamReader is = new InputStreamReader(process.getErrorStream());
-				Scanner scanner = new Scanner(is);
-				String line = null;
-				while (scanner.hasNextLine()) {
-					line = scanner.nextLine();
-					System.out.println(line);
-				}
-				try {
-					is.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				scanner.close();
+				new InputStreamReader(process.getErrorStream());
 			}
 		};
 		err.start();
@@ -104,7 +80,7 @@ public class AlpinoDependencyAnnotator {
 	}
 
 	class MyRunnable implements Runnable {
-		private Process process;
+		private final Process process;
 		private String output;
 
 		public MyRunnable(Process process) {
@@ -142,7 +118,7 @@ public class AlpinoDependencyAnnotator {
 	}
 
 	public List<Dependency> processDependencyTriples(JCas jCas, String output) {
-		ArrayList<Dependency> dependencies = new ArrayList<Dependency>();
+		ArrayList<Dependency> dependencies = new ArrayList<>();
 		if (output == null || output.equals("")) {
 			System.out.println("No dependency triples received");
 			return dependencies;
@@ -176,7 +152,7 @@ public class AlpinoDependencyAnnotator {
 				Token dependent = getTokenList().get(dependentIndex);
 
 				Dependency dep = (Dependency) jCas.getCas().createFS(type);
-				dep.setDependencyType(aDependencyType.toString());
+				dep.setDependencyType(aDependencyType);
 				dep.setGovernor(governor);
 				dep.setDependent(dependent);
 				dep.setBegin(dependent.getBegin());
