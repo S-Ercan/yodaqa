@@ -87,8 +87,8 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				System.out.println("No parse tree for the following sentence was received: " + sentence);
 				continue;
 			}
-			Annotation annotation = annotateConstituents(tokenList, parseTree.getDocumentElement());
-			List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
+			annotateConstituents(tokenList, parseTree.getDocumentElement());
+			annotateDependencies(aJCas, sentence, tokenList);
 			try {
 				JCas ppView = aJCas.getView("PickedPassages");
 			} catch (CASRuntimeException e) {
@@ -106,7 +106,7 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		}
 	}
 
-	private Annotation annotateConstituents(List<Token> tokenList, Node treeNode) {
+	private void annotateConstituents(List<Token> tokenList, Node treeNode) {
 		AlpinoConstituentAnnotator annotator;
 		Annotation annotation = null;
 		try {
@@ -115,10 +115,9 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		} catch (CASException e) {
 			e.printStackTrace();
 		}
-		return annotation;
 	}
 
-	private List<Dependency> annotateDependencies(JCas aJCas, String sentence, List<Token> tokenList) {
+	private void annotateDependencies(JCas aJCas, String sentence, List<Token> tokenList) {
 		AlpinoDependencyAnnotator depAnnotator;
 		List<Dependency> dependencies = null;
 		try {
@@ -133,7 +132,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		} catch (CASException e) {
 			e.printStackTrace();
 		}
-		return dependencies;
 	}
 
 	private String getParseOutput(String sentence) {
