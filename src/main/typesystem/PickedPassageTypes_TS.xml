@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+  <typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
+    <name>PickedPassageTypes</name>
+    <description>PickedPassagesCAS type system</description>
+    <vendor>yodaqa</vendor>
+    <version>1.0</version>
+    <types>
+      <typeDescription>
+        <name>cz.brmlab.yodaqa.model.PickedPassage.PickedPassageInfo</name>
+        <description>Meta-information on the collected passages</description>
+        <supertypeName>uima.cas.TOP</supertypeName>
+        <features>
+          <featureDescription>
+            <name>numPassages</name>
+	    <description>Number of passages collected</description>
+            <rangeTypeName>uima.cas.Integer</rangeTypeName>
+          </featureDescription>
+        </features>
+      </typeDescription>
+    </types>
+  </typeSystemDescription>
