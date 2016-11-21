@@ -18,19 +18,20 @@ import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import edu.stanford.nlp.util.IntPair;
-import java.util.HashMap;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Map;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
-public class AlpinoConstituentAnnotator {
+public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 
 	private static AlpinoConstituentAnnotator constituentAnnotator = null;
-
-	private final String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
-	private final String constituentPackage = alpinoModelsPackage + ".constituent";
-	private final String posPackage = alpinoModelsPackage + ".pos";
-
-	private int numPassages;
-	private Map<JCas, List<Token>> tokenListByJCas = new HashMap<>();
 
 	public static AlpinoConstituentAnnotator getAlpinoConstituentAnnotator(int numPassages) {
 		if (constituentAnnotator == null) {
@@ -41,17 +42,6 @@ public class AlpinoConstituentAnnotator {
 
 	private AlpinoConstituentAnnotator(int numPassages) {
 		setNumPassages(numPassages);
-	}
-
-	public void process(JCas jCas, List<Token> tokenList, Node aNode, Annotation aParentFS) {
-		tokenListByJCas.put(jCas, tokenList);
-		if (tokenListByJCas.size() == getNumPassages()) {
-			for (Map.Entry<JCas, List<Token>> entry : tokenListByJCas.entrySet()) {
-				JCas aJCas = entry.getKey();
-				List<Token> aTokenList = entry.getValue();
-				createConstituentAnnotationFromTree(aJCas, aTokenList, aNode, aParentFS);
-			}
-		}
 	}
 
 	public Annotation createConstituentAnnotationFromTree(JCas jCas, List<Token> tokenList,
@@ -167,12 +157,37 @@ public class AlpinoConstituentAnnotator {
 		return anno;
 	}
 
-	public int getNumPassages() {
-		return numPassages;
+	@Override
+	protected ProcessBuilder createAlpinoProcess() {
+		return new ProcessBuilder("/bin/bash", "bin/Alpino", "end_hook=xml_dump", "-parse", "-notk");
 	}
 
-	public void setNumPassages(int numPassages) {
-		this.numPassages = numPassages;
+	@Override
+	protected void processAlpinoOutput(String output) {
+		Document parseTree = null;
+		try {
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			parseTree = dBuilder.parse(new InputSource(new StringReader(output)));
+			parseTree.getDocumentElement().normalize();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (SAXParseException e) {
+			System.err.println("Could not parse string.");
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		if (parseTree != null) {
+			for (Map.Entry<JCas, List<Token>> entry : getTokenListByJCas().entrySet()) {
+				JCas aJCas = entry.getKey();
+				List<Token> aTokenList = entry.getValue();
+				createConstituentAnnotationFromTree(aJCas, aTokenList, parseTree.
+						getDocumentElement(), null);
+			}
+		}
 	}
 
 }
