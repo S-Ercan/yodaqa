@@ -24,7 +24,9 @@ public abstract class AlpinoAnnotator {
 	protected final String posPackage = alpinoModelsPackage + ".pos";
 
 	private int numPassages;
-	private Map<JCas, List<Token>> tokenListByJCas = new TreeMap<>();
+	private Map<JCas, List<Token>> tokenListByJCas = new TreeMap<>((JCas t, JCas t1) -> {
+		return Integer.valueOf(t.hashCode()).compareTo(t1.hashCode());
+	});
 
 	public void process(JCas jCas, List<Token> tokenList) {
 		tokenListByJCas.put(jCas, tokenList);

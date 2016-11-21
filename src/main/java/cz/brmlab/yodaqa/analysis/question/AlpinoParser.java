@@ -29,7 +29,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-
 		int numPassages = getNumberOfPassagesToAnalyze(aJCas);
 		FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.
 				getType(aJCas, Sentence.class)).iterator();
@@ -37,18 +36,18 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		while (typeToParseIterator.hasNext()) {
 			Annotation annotation = typeToParseIterator.next();
 			ArrayList<Token> tokenList = new ArrayList<>();
-			for (Token token : JCasUtil.selectCovered(Token.class, annotation)) {
-				tokenList.add(token);
-			}
+			JCasUtil.selectCovered(Token.class, annotation).
+				forEach((token) -> {tokenList.add(token);}
+			);
 			annotateConstituents(numPassages, aJCas, tokenList);
 			annotateDependencies(numPassages, aJCas, tokenList);
 		}
 	}
 
 	private int getNumberOfPassagesToAnalyze(JCas aJCas) {
+		int numPassages = 0;
 		Iterator<PickedPassageInfo> ppInfoIterator
 				= JCasUtil.select(aJCas, PickedPassageInfo.class).iterator();
-		int numPassages = 0;
 		while (ppInfoIterator.hasNext()) {
 			numPassages += ppInfoIterator.next().getNumPassages();
 		}
