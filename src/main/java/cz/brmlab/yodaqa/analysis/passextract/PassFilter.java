@@ -82,9 +82,6 @@ public class PassFilter extends JCasAnnotator_ImplBase {
 		FSIterator passages = idx.iterator();
 		int i = 0;
 		CasCopier copier = new CasCopier(passagesView.getCas(), pickedPassagesView.getCas());
-		if (passages.hasNext()) {
-			System.out.println();
-		}
 		while (passages.hasNext() && i++ < numPicked) {
 			Passage passage = (Passage) passages.next();
 			AnsweringPassage ap = new AnsweringPassage(
