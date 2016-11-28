@@ -163,7 +163,7 @@ public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 	}
 
 	@Override
-	protected void processAlpinoOutput(String output) {
+	protected void processAlpinoOutput(JCas aJCas, List<Token> tokenList, String output) {
 		Document parseTree = null;
 		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -181,12 +181,8 @@ public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 		}
 
 		if (parseTree != null) {
-			for (Map.Entry<JCas, List<Token>> entry : getTokenListByJCas().entrySet()) {
-				JCas aJCas = entry.getKey();
-				List<Token> aTokenList = entry.getValue();
-				createConstituentAnnotationFromTree(aJCas, aTokenList, parseTree.
-						getDocumentElement(), null);
-			}
+			createConstituentAnnotationFromTree(aJCas, tokenList, parseTree.
+					getDocumentElement(), null);
 		}
 	}
 

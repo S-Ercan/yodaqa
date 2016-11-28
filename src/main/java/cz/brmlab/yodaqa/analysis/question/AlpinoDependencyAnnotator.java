@@ -35,16 +35,13 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 	}
 
 	@Override
-	protected void processAlpinoOutput(String output) {
+	protected void processAlpinoOutput(JCas aJCas, List<Token> tokenList, String output) {
 		if (output == null || output.equals("")) {
 			System.out.println("No dependency triples received");
 			return;
 		}
 
 		int currentSentenceNumber = 0;
-		Iterator iterator = getTokenListByJCas().entrySet().iterator();
-		JCas aJCas = null;
-		List<Token> aTokenList = null;
 		for (String triple : output.split("\n")) {
 			Pattern pattern = Pattern.compile("(.+)[\\|](.+)[\\|](.+)[\\|](\\d+)");
 			Matcher matcher = pattern.matcher(triple);
@@ -60,10 +57,6 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 				int sentenceNumber = Integer.valueOf(matcher.group(4));
 				if (currentSentenceNumber != sentenceNumber) {
 					currentSentenceNumber = sentenceNumber;
-					Map.Entry<JCas, List<Token>> entry = (Map.Entry<JCas, List<Token>>) iterator.
-							next();
-					aJCas = entry.getKey();
-					aTokenList = entry.getValue();
 				}
 
 				Type type = aJCas.getTypeSystem().getType(dependencyTypeName);
@@ -79,8 +72,8 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 				digitMatcher.find();
 				int dependentIndex = Integer.valueOf(digitMatcher.group(1));
 
-				Token governor = aTokenList.get(governorIndex);
-				Token dependent = aTokenList.get(dependentIndex);
+				Token governor = tokenList.get(governorIndex);
+				Token dependent = tokenList.get(dependentIndex);
 
 				Dependency dep = (Dependency) aJCas.getCas().createFS(type);
 				dep.setDependencyType(aDependencyType);

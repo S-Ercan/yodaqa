@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -14,6 +13,8 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang.NullArgumentException;
+import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
 import org.apache.uima.jcas.JCas;
 
 public abstract class AlpinoAnnotator {
@@ -28,18 +29,34 @@ public abstract class AlpinoAnnotator {
 		return Integer.valueOf(t.hashCode()).compareTo(t1.hashCode());
 	});
 
-	public synchronized String process(String input) {
-		String parseOutput = null;
-		if (input.equals("")) {
-			System.out.println("No sentences to process.");
-		}
-		// Get parse tree and dependency triples
+	public synchronized String process(JCas jCas, List<Token> tokenList) {
+		JCas ppView = null;
 		try {
-			parseOutput = getAlpinoOutput(input);
-		} catch (IOException ex) {
+			ppView = jCas.getView("PickedPassages");
+		} catch (CASRuntimeException ex) {
+			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (CASException ex) {
 			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
 		}
-//			processAlpinoOutput(parseOutput);
+		if (ppView != null) {
+			return null;
+		}
+		String input = "";
+		for (Token token : tokenList) {
+			input += token.getCoveredText() + " ";
+		}
+		return process(input);
+	}
+
+	public synchronized String process(String input) {
+		String parseOutput = null;
+		if (!input.equals("")) {
+			try {
+				parseOutput = getAlpinoOutput(input);
+			} catch (IOException ex) {
+				Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
 		return parseOutput;
 	}
 
@@ -85,7 +102,7 @@ public abstract class AlpinoAnnotator {
 		return myRunnable.getOutput();
 	}
 
-	protected abstract void processAlpinoOutput(String output);
+	protected abstract void processAlpinoOutput(JCas jCas, List<Token> tokenList, String output);
 
 	class MyRunnable implements Runnable {
 

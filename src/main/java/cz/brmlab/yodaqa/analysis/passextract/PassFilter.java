@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import cz.brmlab.yodaqa.model.SearchResult.Passage;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import java.util.List;
 
 /**
  * Generate Passages from Sentences that contain some Clue in Question and copy them over to the
@@ -82,12 +83,15 @@ public class PassFilter extends JCasAnnotator_ImplBase {
 		FSIterator passages = idx.iterator();
 		int i = 0;
 		CasCopier copier = new CasCopier(passagesView.getCas(), pickedPassagesView.getCas());
+		List<Token> tokenList;
 		while (passages.hasNext() && i++ < numPicked) {
 			Passage passage = (Passage) passages.next();
 			AnsweringPassage ap = new AnsweringPassage(
 					SnippetIDGenerator.getInstance().generateID(), sourceID, passage.
 					getCoveredText());
 			QuestionDashboard.getInstance().get(questionView).addSnippet(ap);
+
+			tokenList = JCasUtil.selectCovered(Token.class, passage);
 			AnswerDashboard.getAnswerDashBoard().addSentence(passage.getCoveredText());
 
 			Passage p2 = (Passage) copier.copyFs(passage);
@@ -107,7 +111,7 @@ public class PassFilter extends JCasAnnotator_ImplBase {
 			/* Count tokens, just for a debug print.
 			 * This is relevant because of StanfordParser
 			 * MAX_TOKENS limit. */
-			int n_tokens = JCasUtil.selectCovered(Token.class, passage).size();
+			int n_tokens = tokenList.size();
 			logger.debug(passage.getScore() + " | " + passage.getCoveredText() + " | " + n_tokens);
 		}
 	}

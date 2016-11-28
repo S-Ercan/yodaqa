@@ -58,12 +58,10 @@ public final class AnswerDashboard {
 				getAlpinoConstituentAnnotator();
 		AlpinoDependencyAnnotator dependencyAnnotator = AlpinoDependencyAnnotator.
 				getAlpinoDependencyAnnotator();
-		String input = "";
 		for (String sentence : sentences) {
-			input += sentence;
+			String parseOutput = constituentAnnotator.process(sentence);
+			String triplesOutput = dependencyAnnotator.process(sentence);
 		}
-		constituentAnnotator.process(input);
-		dependencyAnnotator.process(input);
 	}
 
 }

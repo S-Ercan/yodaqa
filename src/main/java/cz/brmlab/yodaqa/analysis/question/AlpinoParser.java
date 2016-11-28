@@ -1,6 +1,5 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import cz.brmlab.yodaqa.flow.dashboard.AnswerDashboard;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +14,6 @@ import org.apache.uima.resource.ResourceInitializationException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import org.apache.uima.cas.CASException;
-import org.apache.uima.cas.CASRuntimeException;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
 
@@ -30,7 +27,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		int numPassages = getNumberOfPassagesToAnalyze(aJCas);
 		FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.
 				getType(aJCas, Sentence.class)).iterator();
 
@@ -47,31 +43,16 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		}
 	}
 
-	private int getNumberOfPassagesToAnalyze(JCas aJCas) {
-		int numPassages = 0;
-		try {
-			aJCas.getView("PickedPassages");
-			numPassages = AnswerDashboard.getAnswerDashBoard().getNumSearchResults();
-		} catch (CASException | CASRuntimeException e) {
-			try {
-				aJCas.getView("_InitialView");
-				numPassages = 1;
-			} catch (CASException ex1) {
-
-			}
-		}
-
-		return numPassages;
-	}
-
 	private void annotateConstituents(JCas jCas, List<Token> tokenList) {
 		constituentAnnotator = AlpinoConstituentAnnotator.getAlpinoConstituentAnnotator();
-//		constituentAnnotator.process(tokenList);
+		String output = constituentAnnotator.process(jCas, tokenList);
+		constituentAnnotator.processAlpinoOutput(jCas, tokenList, output);
 	}
 
 	private void annotateDependencies(JCas jCas, List<Token> tokenList) {
 		dependencyAnnotator = AlpinoDependencyAnnotator.getAlpinoDependencyAnnotator();
-//		dependencyAnnotator.process(tokenList);
+		String output = dependencyAnnotator.process(jCas, tokenList);
+		dependencyAnnotator.processAlpinoOutput(jCas, tokenList, output);
 	}
 
 }
