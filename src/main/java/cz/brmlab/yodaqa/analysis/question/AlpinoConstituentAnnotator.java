@@ -33,15 +33,15 @@ public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 
 	private static AlpinoConstituentAnnotator constituentAnnotator = null;
 
-	public static AlpinoConstituentAnnotator getAlpinoConstituentAnnotator(int numPassages) {
+	public static AlpinoConstituentAnnotator getAlpinoConstituentAnnotator() {
 		if (constituentAnnotator == null) {
-			constituentAnnotator = new AlpinoConstituentAnnotator(numPassages);
+			constituentAnnotator = new AlpinoConstituentAnnotator();
 		}
 		return constituentAnnotator;
 	}
 
-	private AlpinoConstituentAnnotator(int numPassages) {
-		setNumPassages(numPassages);
+	private AlpinoConstituentAnnotator() {
+
 	}
 
 	public Annotation createConstituentAnnotationFromTree(JCas jCas, List<Token> tokenList,

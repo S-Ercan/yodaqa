@@ -1,6 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import java.util.ArrayList;
+import cz.brmlab.yodaqa.flow.dashboard.AnswerDashboard;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,15 +18,15 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 
 	private static AlpinoDependencyAnnotator dependencyAnnotator = null;
 
-	public static AlpinoDependencyAnnotator getAlpinoDependencyAnnotator(int numPassages) {
+	public static AlpinoDependencyAnnotator getAlpinoDependencyAnnotator() {
 		if (dependencyAnnotator == null) {
-			dependencyAnnotator = new AlpinoDependencyAnnotator(numPassages);
+			dependencyAnnotator = new AlpinoDependencyAnnotator();
 		}
 		return dependencyAnnotator;
 	}
 
-	private AlpinoDependencyAnnotator(int numPassages) {
-		setNumPassages(numPassages);
+	private AlpinoDependencyAnnotator() {
+
 	}
 
 	@Override
@@ -36,23 +36,17 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 
 	@Override
 	protected void processAlpinoOutput(String output) {
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
-	public List<Dependency> processDependencyTriples(String output) {
-		ArrayList<Dependency> dependencies = new ArrayList<>();
 		if (output == null || output.equals("")) {
 			System.out.println("No dependency triples received");
-			return dependencies;
+			return;
 		}
 
+		int currentSentenceNumber = 0;
 		Iterator iterator = getTokenListByJCas().entrySet().iterator();
+		JCas aJCas = null;
+		List<Token> aTokenList = null;
 		for (String triple : output.split("\n")) {
-			Map.Entry<JCas, List<Token>> entry = (Map.Entry<JCas, List<Token>>) iterator.next();
-			JCas aJCas = entry.getKey();
-			List<Token> aTokenList = entry.getValue();
-
-			Pattern pattern = Pattern.compile("(.+)[\\|](.+)[\\|](.+)[\\|]");
+			Pattern pattern = Pattern.compile("(.+)[\\|](.+)[\\|](.+)[\\|](\\d+)");
 			Matcher matcher = pattern.matcher(triple);
 			if (matcher.find()) {
 				String governorString = matcher.group(1);
@@ -62,6 +56,15 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 				String aDependencyType = matcher.group(2).split("/")[1];
 				String dependentString = matcher.group(3);
 				String dependencyTypeName = dependencyPackage + "." + aDependencyType.toUpperCase();
+
+				int sentenceNumber = Integer.valueOf(matcher.group(4));
+				if (currentSentenceNumber != sentenceNumber) {
+					currentSentenceNumber = sentenceNumber;
+					Map.Entry<JCas, List<Token>> entry = (Map.Entry<JCas, List<Token>>) iterator.
+							next();
+					aJCas = entry.getKey();
+					aTokenList = entry.getValue();
+				}
 
 				Type type = aJCas.getTypeSystem().getType(dependencyTypeName);
 				if (type == null) {
@@ -86,9 +89,9 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 				dep.setBegin(dependent.getBegin());
 				dep.setEnd(dependent.getEnd());
 				dep.addToIndexes();
-				dependencies.add(dep);
 			}
 		}
-		return dependencies;
+		getTokenListByJCas().clear();
+		AnswerDashboard.getAnswerDashBoard().setNumSearchResults(0);
 	}
 }

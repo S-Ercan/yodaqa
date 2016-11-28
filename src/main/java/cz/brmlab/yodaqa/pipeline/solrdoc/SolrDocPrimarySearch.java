@@ -5,11 +5,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import cz.brmlab.yodaqa.flow.dashboard.AnswerIDGenerator;
-import cz.brmlab.yodaqa.flow.dashboard.AnswerSource;
 import cz.brmlab.yodaqa.flow.dashboard.AnswerSourceEnwiki;
-import cz.brmlab.yodaqa.flow.dashboard.Question;
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
-import cz.brmlab.yodaqa.flow.dashboard.SourceIDGenerator;
 import cz.brmlab.yodaqa.flow.dashboard.snippet.AnsweringDocTitle;
 import cz.brmlab.yodaqa.flow.dashboard.snippet.SnippetIDGenerator;
 import org.apache.solr.common.SolrDocument;

@@ -14,9 +14,6 @@ import cz.brmlab.yodaqa.analysis.tycor.LATByWordnet;
 import cz.brmlab.yodaqa.analysis.tycor.LATMatchTyCor;
 import cz.brmlab.yodaqa.analysis.tycor.LATNormalize;
 
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
-
-import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createPrimitiveDescription;
 
 /**

@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-import cz.brmlab.yodaqa.flow.dashboard.SourceIDGenerator;
-
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -30,8 +28,8 @@ import cz.brmlab.yodaqa.flow.asb.MultiThreadASB;
 import cz.brmlab.yodaqa.flow.dashboard.AnswerSourceEnwiki;
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import cz.brmlab.yodaqa.analysis.ansscore.AF;
+import cz.brmlab.yodaqa.flow.dashboard.AnswerDashboard;
 import cz.brmlab.yodaqa.model.Question.Clue;
-import cz.brmlab.yodaqa.model.Question.ClueConcept;
 import cz.brmlab.yodaqa.model.Question.Concept;
 import cz.brmlab.yodaqa.model.SearchResult.ResultInfo;
 import cz.brmlab.yodaqa.provider.solr.Solr;
@@ -39,27 +37,30 @@ import cz.brmlab.yodaqa.provider.solr.SolrNamedSource;
 import cz.brmlab.yodaqa.provider.solr.SolrQuerySettings;
 import cz.brmlab.yodaqa.provider.solr.SolrTerm;
 
-
 /**
- * Take a question CAS and search for keywords (or already resolved pageIDs)
- * in the Solr data source.  Each search results gets a new CAS.
+ * Take a question CAS and search for keywords (or already resolved pageIDs) in the Solr data
+ * source. Each search results gets a new CAS.
  *
- * We just feed most of the clues to a Solr search. */
-
+ * We just feed most of the clues to a Solr search.
+ */
 public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
+
 	final Logger logger = LoggerFactory.getLogger(SolrFullPrimarySearch.class);
 
-	/** Number of results to grab and analyze. */
+	/**
+	 * Number of results to grab and analyze.
+	 */
 	public static final String PARAM_HITLIST_SIZE = "hitlist-size";
 	@ConfigurationParameter(name = PARAM_HITLIST_SIZE, mandatory = false, defaultValue = "6")
 	protected int hitListSize;
 
-	/** Number and baseline distance of gradually desensitivized
-	 * proximity searches. Total of proximity-num optional search
-	 * terms are included, covering proximity-base-dist * #of terms
-	 * neighborhood. For each proximity term, the coverage is
-	 * successively multiplied by proximity-base-factor; initial weight
-	 * is sum of individual weights and is successively halved. */
+	/**
+	 * Number and baseline distance of gradually desensitivized proximity searches. Total of
+	 * proximity-num optional search terms are included, covering proximity-base-dist * #of terms
+	 * neighborhood. For each proximity term, the coverage is successively multiplied by
+	 * proximity-base-factor; initial weight is sum of individual weights and is successively
+	 * halved.
+	 */
 	public static final String PARAM_PROXIMITY_NUM = "proximity-num";
 	@ConfigurationParameter(name = PARAM_PROXIMITY_NUM, mandatory = false, defaultValue = "3")
 	protected int proximityNum;
@@ -67,23 +68,32 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 	@ConfigurationParameter(name = PARAM_PROXIMITY_BASE_DIST, mandatory = false, defaultValue = "2")
 	protected int proximityBaseDist;
 	public static final String PARAM_PROXIMITY_BASE_FACTOR = "proximity-base-factor";
-	@ConfigurationParameter(name = PARAM_PROXIMITY_BASE_FACTOR, mandatory = false, defaultValue = "3")
+	@ConfigurationParameter(name = PARAM_PROXIMITY_BASE_FACTOR, mandatory = false, defaultValue
+			= "3")
 	protected int proximityBaseFactor;
 
-	/** Search full text of articles in addition to their titles. */
+	/**
+	 * Search full text of articles in addition to their titles.
+	 */
 	public static final String PARAM_SEARCH_FULL_TEXT = "search-full-text";
 	@ConfigurationParameter(name = PARAM_SEARCH_FULL_TEXT, mandatory = false, defaultValue = "true")
 	protected boolean searchFullText;
 
-	/** Make all clues required to be present. */
+	/**
+	 * Make all clues required to be present.
+	 */
 	public static final String PARAM_CLUES_ALL_REQUIRED = "clues-all-required";
-	@ConfigurationParameter(name = PARAM_CLUES_ALL_REQUIRED, mandatory = false, defaultValue = "true")
+	@ConfigurationParameter(name = PARAM_CLUES_ALL_REQUIRED, mandatory = false, defaultValue
+			= "true")
 	protected boolean cluesAllRequired;
 
-	/** Origin field of ResultInfo. This can be used to fetch different
-	 * ResultInfos in different CAS flow branches. */
+	/**
+	 * Origin field of ResultInfo. This can be used to fetch different ResultInfos in different CAS
+	 * flow branches.
+	 */
 	public static final String PARAM_RESULT_INFO_ORIGIN = "result-info-origin";
-	@ConfigurationParameter(name = PARAM_RESULT_INFO_ORIGIN, mandatory = false, defaultValue = "cz.brmlab.yodaqa.pipeline.solrfull.SolrFullPrimarySearch")
+	@ConfigurationParameter(name = PARAM_RESULT_INFO_ORIGIN, mandatory = false, defaultValue
+			= "cz.brmlab.yodaqa.pipeline.solrfull.SolrFullPrimarySearch")
 	protected String resultInfoOrigin;
 
 	protected SolrQuerySettings settings = null;
@@ -93,6 +103,7 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 	protected JCas questionView;
 
 	protected class SolrResult {
+
 		public SolrDocument doc;
 		public Concept concept;
 		public int rank;
@@ -104,7 +115,6 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 			this.rank = rank;
 
 			// XXX: Perhaps this shouldn't be in a constructor
-
 			Integer id = (Integer) doc.getFieldValue("id");
 			String title = (String) doc.getFieldValue("titleText");
 			double score = ((Float) doc.getFieldValue("score")).floatValue();
@@ -130,10 +140,12 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 		this.solr = SolrNamedSource.get(srcName);
 
 		if (searchFullText) {
-			this.settings = new SolrQuerySettings(proximityNum, proximityBaseDist, proximityBaseFactor,
+			this.settings = new SolrQuerySettings(proximityNum, proximityBaseDist,
+					proximityBaseFactor,
 					new String[]{"", "titleText"}, cluesAllRequired);
 		} else {
-			this.settings = new SolrQuerySettings(proximityNum, proximityBaseDist, proximityBaseFactor,
+			this.settings = new SolrQuerySettings(proximityNum, proximityBaseDist,
+					proximityBaseFactor,
 					new String[]{"titleText"}, cluesAllRequired);
 		}
 	}
@@ -156,15 +168,17 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 
 		/* Run a search for concepts (pageID)
 		 * if they weren't included above. */
-
 		Map<Integer, Concept> concepts = new HashMap<>();
 		SolrDocumentList documents;
 		int i;
 		try {
-			for (Concept concept : JCasUtil.select(questionView, Concept.class))
+			for (Concept concept : JCasUtil.select(questionView, Concept.class)) {
 				concepts.put(concept.getPageID(), concept);
+			}
 			Collection<Integer> IDs = concepts.keySet();
-			documents = solr.runIDQuery(IDs, hitListSize /* XXX: should we even limit this? */, logger);
+			documents = solr.
+					runIDQuery(IDs, hitListSize /* XXX: should we even limit this? */,
+							logger);
 		} catch (Exception e) {
 			throw new AnalysisEngineProcessException(e);
 		}
@@ -178,7 +192,6 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 		}
 
 		/* Run a search for text clues. */
-
 		try {
 			Collection<Clue> clues = JCasUtil.select(questionView, Clue.class);
 			Collection<SolrTerm> terms = SolrTerm.cluesToTerms(clues);
@@ -196,8 +209,9 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 			}
 			visitedIDs.add(docID);
 			/* Record the result. */
-			results.add(new SolrResult(doc, null, i+1));
+			results.add(new SolrResult(doc, null, i + 1));
 		}
+		AnswerDashboard.getAnswerDashBoard().setNumSearchResults(results.size());
 	}
 
 	@Override
@@ -213,7 +227,8 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 		JCas jcas = getEmptyJCas();
 		try {
 			jcas.createView("Question");
-			CasCopier qcopier = new CasCopier(questionView.getCas(), jcas.getView("Question").getCas());
+			CasCopier qcopier = new CasCopier(questionView.getCas(), jcas.getView("Question").
+					getCas());
 			copyQuestion(qcopier, questionView, jcas.getView("Question"));
 
 			jcas.createView("Result");
@@ -222,8 +237,10 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 				boolean isLast = i == results.size();
 				ResultInfo ri = generateSolrResult(questionView, resultView, result, isLast ? i : 0);
 				String title = ri.getDocumentTitle();
-				logger.info(" ** SearchResultCAS: " + ri.getDocumentId() + " " + (title != null ? title : ""));
-				QuestionDashboard.getInstance().get(questionView).setSourceState(ri.getSourceID(), 1);
+				logger.info(
+						" ** SearchResultCAS: " + ri.getDocumentId() + " " + (title != null ? title : ""));
+				QuestionDashboard.getInstance().get(questionView).
+						setSourceState(ri.getSourceID(), 1);
 			} else {
 				/* We will just generate a single dummy CAS
 				 * to avoid flow breakage. */
@@ -247,9 +264,7 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 	}
 
 	protected ResultInfo generateSolrResult(JCas questionView, JCas resultView,
-					  SolrResult result,
-					  int isLast)
-			throws AnalysisEngineProcessException {
+			SolrResult result, int isLast) throws AnalysisEngineProcessException {
 		Integer id = (Integer) result.doc.getFieldValue("id");
 		String title = (String) result.doc.getFieldValue("titleText");
 		double score = ((Float) result.doc.getFieldValue("score")).floatValue();
@@ -269,15 +284,21 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 		afv.setFeature(AF.ResultLogScore, Math.log(1 + score));
 		if (result.concept != null) {
 			afv.setFeature(AF.OriginConcept, 1.0);
-			if (result.concept.getBySubject())
+			if (result.concept.getBySubject()) {
 				afv.setFeature(AF.OriginConceptBySubject, 1.0);
-			if (result.concept.getByLAT())
+			}
+			if (result.concept.getByLAT()) {
 				afv.setFeature(AF.OriginConceptByLAT, 1.0);
-			if (result.concept.getByNE())
+			}
+			if (result.concept.getByNE()) {
 				afv.setFeature(AF.OriginConceptByNE, 1.0);
-			afv.setFeature(AF.OriginConcept_feat + AF._clueType_ConceptSourceRR, result.concept.getSourceRr());
-			afv.setFeature(AF.OriginConcept_feat + AF._clueType_ConceptLabelRR, result.concept.getLabelRr());
-			afv.setFeature(AF.OriginConcept_feat + AF._clueType_ConceptScore, result.concept.getScore());
+			}
+			afv.setFeature(AF.OriginConcept_feat + AF._clueType_ConceptSourceRR, result.concept.
+					getSourceRr());
+			afv.setFeature(AF.OriginConcept_feat + AF._clueType_ConceptLabelRR, result.concept.
+					getLabelRr());
+			afv.setFeature(AF.OriginConcept_feat + AF._clueType_ConceptScore, result.concept.
+					getScore());
 		}
 
 		ResultInfo ri = new ResultInfo(resultView);

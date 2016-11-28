@@ -28,31 +28,19 @@ public abstract class AlpinoAnnotator {
 		return Integer.valueOf(t.hashCode()).compareTo(t1.hashCode());
 	});
 
-	public void process(JCas jCas, List<Token> tokenList) {
-		tokenListByJCas.put(jCas, tokenList);
-		if (tokenListByJCas.size() == getNumPassages()) {
-			String sentences = "";
-			for (List<Token> aTokenList : tokenListByJCas.values()) {
-				// Combine tokens into sentence
-				String text;
-				for (Token token : aTokenList) {
-					text = token.getCoveredText();
-					text = Normalizer.normalize(text, Normalizer.Form.NFD);
-					sentences += text + ' ';
-				}
-			}
-			if (sentences.equals("")) {
-				System.out.println("No sentences to process.");
-			}
-			// Get parse tree and dependency triples
-			String parseOutput = null;
-			try {
-				parseOutput = getAlpinoOutput(sentences);
-			} catch (IOException ex) {
-				Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
-			}
-			processAlpinoOutput(parseOutput);
+	public synchronized String process(String input) {
+		String parseOutput = null;
+		if (input.equals("")) {
+			System.out.println("No sentences to process.");
 		}
+		// Get parse tree and dependency triples
+		try {
+			parseOutput = getAlpinoOutput(input);
+		} catch (IOException ex) {
+			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+		}
+//			processAlpinoOutput(parseOutput);
+		return parseOutput;
 	}
 
 	protected abstract ProcessBuilder createAlpinoProcess();

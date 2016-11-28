@@ -1,6 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import cz.brmlab.yodaqa.model.PickedPassage.PickedPassageInfo;
+import cz.brmlab.yodaqa.flow.dashboard.AnswerDashboard;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +15,8 @@ import org.apache.uima.resource.ResourceInitializationException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import java.util.Iterator;
+import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
 
@@ -37,33 +38,40 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 			Annotation annotation = typeToParseIterator.next();
 			ArrayList<Token> tokenList = new ArrayList<>();
 			JCasUtil.selectCovered(Token.class, annotation).
-				forEach((token) -> {tokenList.add(token);}
-			);
-			annotateConstituents(numPassages, aJCas, tokenList);
-			annotateDependencies(numPassages, aJCas, tokenList);
+					forEach((token) -> {
+						tokenList.add(token);
+					}
+					);
+			annotateConstituents(aJCas, tokenList);
+			annotateDependencies(aJCas, tokenList);
 		}
 	}
 
 	private int getNumberOfPassagesToAnalyze(JCas aJCas) {
 		int numPassages = 0;
-		Iterator<PickedPassageInfo> ppInfoIterator
-				= JCasUtil.select(aJCas, PickedPassageInfo.class).iterator();
-		while (ppInfoIterator.hasNext()) {
-			numPassages += ppInfoIterator.next().getNumPassages();
+		try {
+			aJCas.getView("PickedPassages");
+			numPassages = AnswerDashboard.getAnswerDashBoard().getNumSearchResults();
+		} catch (CASException | CASRuntimeException e) {
+			try {
+				aJCas.getView("_InitialView");
+				numPassages = 1;
+			} catch (CASException ex1) {
+
+			}
 		}
+
 		return numPassages;
 	}
 
-	private void annotateConstituents(int numPassages, JCas jCas, List<Token> tokenList) {
-		constituentAnnotator = AlpinoConstituentAnnotator.getAlpinoConstituentAnnotator(
-				numPassages);
-		constituentAnnotator.process(jCas, tokenList);
+	private void annotateConstituents(JCas jCas, List<Token> tokenList) {
+		constituentAnnotator = AlpinoConstituentAnnotator.getAlpinoConstituentAnnotator();
+//		constituentAnnotator.process(tokenList);
 	}
 
-	private void annotateDependencies(int numPassages, JCas jCas, List<Token> tokenList) {
-		dependencyAnnotator = AlpinoDependencyAnnotator.getAlpinoDependencyAnnotator(
-				numPassages);
-		dependencyAnnotator.process(jCas, tokenList);
+	private void annotateDependencies(JCas jCas, List<Token> tokenList) {
+		dependencyAnnotator = AlpinoDependencyAnnotator.getAlpinoDependencyAnnotator();
+//		dependencyAnnotator.process(tokenList);
 	}
 
 }
