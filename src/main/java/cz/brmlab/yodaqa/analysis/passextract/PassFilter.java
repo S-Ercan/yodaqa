@@ -52,8 +52,6 @@ public class PassFilter extends JCasAnnotator_ImplBase {
 	@ConfigurationParameter(name = PARAM_NUM_PICKED, mandatory = false, defaultValue = "3")
 	private int numPicked;
 
-	private int numPassages = 0;
-
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
@@ -92,7 +90,11 @@ public class PassFilter extends JCasAnnotator_ImplBase {
 			QuestionDashboard.getInstance().get(questionView).addSnippet(ap);
 
 			tokenList = JCasUtil.selectCovered(Token.class, passage);
-			AnswerDashboard.getAnswerDashBoard().addSentence(passage.getCoveredText());
+			String sentence = "";
+			for (Token token : tokenList) {
+				sentence += token.getCoveredText() + " ";
+			}
+			AnswerDashboard.getAnswerDashBoard().addSentence(sentence);
 
 			Passage p2 = (Passage) copier.copyFs(passage);
 			p2.setSnippetID(ap.getSnippetID());
@@ -114,5 +116,6 @@ public class PassFilter extends JCasAnnotator_ImplBase {
 			int n_tokens = tokenList.size();
 			logger.debug(passage.getScore() + " | " + passage.getCoveredText() + " | " + n_tokens);
 		}
+		AnswerDashboard.getAnswerDashBoard().incrementNumSearchResultsProcessed();
 	}
 }

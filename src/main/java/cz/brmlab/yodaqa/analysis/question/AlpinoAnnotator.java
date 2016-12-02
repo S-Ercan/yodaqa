@@ -7,14 +7,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang.NullArgumentException;
-import org.apache.uima.cas.CASException;
-import org.apache.uima.cas.CASRuntimeException;
 import org.apache.uima.jcas.JCas;
 
 public abstract class AlpinoAnnotator {
@@ -25,30 +21,8 @@ public abstract class AlpinoAnnotator {
 	protected final String posPackage = alpinoModelsPackage + ".pos";
 
 	private int numPassages;
-	private Map<JCas, List<Token>> tokenListByJCas = new TreeMap<>((JCas t, JCas t1) -> {
-		return Integer.valueOf(t.hashCode()).compareTo(t1.hashCode());
-	});
 
-	public synchronized String process(JCas jCas, List<Token> tokenList) {
-		JCas ppView = null;
-		try {
-			ppView = jCas.getView("PickedPassages");
-		} catch (CASRuntimeException ex) {
-			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (CASException ex) {
-			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		if (ppView != null) {
-			return null;
-		}
-		String input = "";
-		for (Token token : tokenList) {
-			input += token.getCoveredText() + " ";
-		}
-		return process(input);
-	}
-
-	public synchronized String process(String input) {
+	public String process(String input) {
 		String parseOutput = null;
 		if (!input.equals("")) {
 			try {
@@ -149,13 +123,5 @@ public abstract class AlpinoAnnotator {
 
 	protected void setNumPassages(int numPassages) {
 		this.numPassages = numPassages;
-	}
-
-	protected Map<JCas, List<Token>> getTokenListByJCas() {
-		return tokenListByJCas;
-	}
-
-	protected void setTokenListByJCas(Map<JCas, List<Token>> tokenListByJCas) {
-		this.tokenListByJCas = tokenListByJCas;
 	}
 }

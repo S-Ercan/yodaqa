@@ -27,7 +27,7 @@ public class YodaQA_Interactive {
 		AnalysisEngineDescription printer = createEngineDescription(
 				InteractiveAnswerPrinter.class);
 
-//		ParallelEngineFactory.registerFactory(); // comment out for a linear single-thread flow
+		ParallelEngineFactory.registerFactory(); // comment out for a linear single-thread flow
 		/* XXX: Later, we will want to create an actual flow
 		 * to support scaleout. */
 		MultiCASPipeline.runPipeline(reader,

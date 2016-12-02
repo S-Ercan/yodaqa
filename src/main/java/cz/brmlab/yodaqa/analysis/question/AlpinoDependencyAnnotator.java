@@ -11,27 +11,58 @@ import org.apache.uima.jcas.JCas;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
 
 public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 
-	private static AlpinoDependencyAnnotator dependencyAnnotator = null;
-
-	public static AlpinoDependencyAnnotator getAlpinoDependencyAnnotator() {
-		if (dependencyAnnotator == null) {
-			dependencyAnnotator = new AlpinoDependencyAnnotator();
+	public String process(JCas jCas, List<Token> tokenList) {
+		JCas ppView = null;
+		try {
+			ppView = jCas.getView("PickedPassages");
+		} catch (CASRuntimeException ex) {
+//			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (CASException ex) {
+//			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		return dependencyAnnotator;
-	}
-
-	private AlpinoDependencyAnnotator() {
-
+		String input = "";
+		for (Token token : tokenList) {
+			input += token.getCoveredText() + " ";
+		}
+		if (ppView != null) {
+			if (AnswerDashboard.getAnswerDashBoard().getDependencyTriplesForSentence(input) == null) {
+				return null;
+			}
+			try {
+				synchronized (AnswerDashboard.getAnswerDashBoard().getFlag()) {
+					AnswerDashboard.getAnswerDashBoard().getFlag().wait(500);
+				}
+			} catch (InterruptedException ex) {
+				Logger.getLogger(AlpinoConstituentAnnotator.class.getName()).log(Level.SEVERE, null,
+						ex);
+			}
+//			while (!AnswerDashboard.getAnswerDashBoard().outputsPresentForSentence(input)) {
+//				try {
+//					Thread.sleep(500);
+//				} catch (InterruptedException ex) {
+//					Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+//				}
+//			}
+			String parseOutput = AnswerDashboard.getAnswerDashBoard().
+					getDependencyTriplesForSentence(input);
+//			AnswerDashboard.getAnswerDashBoard().removeDependencyTriplesForSentence(input);
+			return parseOutput;
+		} else {
+			return process(input);
+		}
 	}
 
 	@Override
 	protected ProcessBuilder createAlpinoProcess() {
-		return new ProcessBuilder("/bin/bash", "bin/Alpino", "end_hook=triples", "-parse", "-notk");
+		return new ProcessBuilder("/bin/bash", "bin/Alpino", "end_hook=triples", "-parse",
+				"-notk");
 	}
 
 	@Override
@@ -52,7 +83,8 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 				}
 				String aDependencyType = matcher.group(2).split("/")[1];
 				String dependentString = matcher.group(3);
-				String dependencyTypeName = dependencyPackage + "." + aDependencyType.toUpperCase();
+				String dependencyTypeName = dependencyPackage + "." + aDependencyType.
+						toUpperCase();
 
 				int sentenceNumber = Integer.valueOf(matcher.group(4));
 				if (currentSentenceNumber != sentenceNumber) {
@@ -84,7 +116,5 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 				dep.addToIndexes();
 			}
 		}
-		getTokenListByJCas().clear();
-		AnswerDashboard.getAnswerDashBoard().setNumSearchResults(0);
 	}
 }

@@ -1,5 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
+import cz.brmlab.yodaqa.flow.dashboard.AnswerDashboard;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,10 +21,13 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import edu.stanford.nlp.util.IntPair;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.uima.cas.CASException;
+import org.apache.uima.cas.CASRuntimeException;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -31,17 +35,44 @@ import org.xml.sax.SAXParseException;
 
 public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 
-	private static AlpinoConstituentAnnotator constituentAnnotator = null;
-
-	public static AlpinoConstituentAnnotator getAlpinoConstituentAnnotator() {
-		if (constituentAnnotator == null) {
-			constituentAnnotator = new AlpinoConstituentAnnotator();
+	public String process(JCas jCas, List<Token> tokenList) {
+		JCas ppView = null;
+		try {
+			ppView = jCas.getView("PickedPassages");
+		} catch (CASRuntimeException ex) {
+//			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (CASException ex) {
+//			Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		return constituentAnnotator;
-	}
-
-	private AlpinoConstituentAnnotator() {
-
+		String input = "";
+		for (Token token : tokenList) {
+			input += token.getCoveredText() + " ";
+		}
+		if (ppView != null) {
+			if (AnswerDashboard.getAnswerDashBoard().getParseTreeForSentence(input) == null) {
+				return null;
+			}
+			try {
+				synchronized (AnswerDashboard.getAnswerDashBoard().getFlag()) {
+					AnswerDashboard.getAnswerDashBoard().getFlag().wait(500);
+				}
+			} catch (InterruptedException ex) {
+				Logger.getLogger(AlpinoConstituentAnnotator.class.getName()).log(Level.SEVERE, null,
+						ex);
+			}
+//			while (!AnswerDashboard.getAnswerDashBoard().outputsPresentForSentence(input)) {
+//				try {
+//					Thread.sleep(500);
+//				} catch (InterruptedException ex) {
+//					Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
+//				}
+//			}
+			String parseOutput = AnswerDashboard.getAnswerDashBoard().getParseTreeForSentence(input);
+//			AnswerDashboard.getAnswerDashBoard().removeParseTreeForSentence(input);
+			return parseOutput;
+		} else {
+			return process(input);
+		}
 	}
 
 	public Annotation createConstituentAnnotationFromTree(JCas jCas, List<Token> tokenList,
@@ -181,8 +212,8 @@ public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 		}
 
 		if (parseTree != null) {
-			createConstituentAnnotationFromTree(aJCas, tokenList, parseTree.
-					getDocumentElement(), null);
+			createConstituentAnnotationFromTree(aJCas, tokenList, parseTree.getDocumentElement(),
+					null);
 		}
 	}
 

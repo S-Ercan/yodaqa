@@ -6,21 +6,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class AnswerDashboard {
 
-	private static AnswerDashboard answerDashboard;
+	private static AnswerDashboard answerDashboard = new AnswerDashboard();
 
-	private int numSearchResults;
-	private List<String> sentences;
-	private Map<String, String> sentenceToParseTree;
-	private Map<String, String> sentenceToDependencyTriples;
+	private int numSearchResults = 0;
+	private int numSearchResultsProcessed = 0;
+
+	private List<String> sentences = new ArrayList<>();
+	private Map<String, String> sentenceToParseTree = new HashMap<>();
+	private Map<String, String> sentenceToDependencyTriples = new HashMap<>();
+
+	private Object flag = new Object();
+
+	public Object getFlag() {
+		return flag;
+	}
+
+	public void setFlag(Object flag) {
+		this.flag = flag;
+	}
 
 	private AnswerDashboard() {
-		numSearchResults = 0;
-		sentences = new ArrayList<>();
-		sentenceToParseTree = new HashMap<>();
-		sentenceToDependencyTriples = new HashMap<>();
 	}
 
 	public static AnswerDashboard getAnswerDashBoard() {
@@ -30,38 +40,114 @@ public final class AnswerDashboard {
 		return answerDashboard;
 	}
 
-	public synchronized int getNumSearchResults() {
+	public synchronized void addSentence(String sentence) {
+		sentences.add(sentence);
+		sentenceToParseTree.put(sentence, "");
+		sentenceToDependencyTriples.put(sentence, "");
+	}
+
+	private synchronized void getAlpinoOutput() {
+		String input = "";
+		for (String sentence : sentences) {
+			input += sentence + '\n';
+		}
+		if (input.equals("")) {
+			return;
+		}
+
+		AlpinoConstituentAnnotator constituentAnnotator = new AlpinoConstituentAnnotator();
+		AlpinoDependencyAnnotator dependencyAnnotator = new AlpinoDependencyAnnotator();
+		String parseOutput = constituentAnnotator.process(input);
+		String triplesOutput = dependencyAnnotator.process(input);
+		processParseOutput(parseOutput);
+		processTriplesOutput(triplesOutput);
+
+		synchronized (getFlag()) {
+			getFlag().notifyAll();
+		}
+//		sentences.clear();
+	}
+
+	private void processParseOutput(String parseOutput) {
+		String[] strings = parseOutput.split("<\\?xml version=\"1.0\" encoding=\"UTF-8\"\\?>");
+		int counter = 0;
+		for (String string : strings) {
+			if (string.equals("")) {
+				continue;
+			}
+			sentenceToParseTree.put(sentences.get(counter), string.replaceAll("\\n", ""));
+			counter++;
+		}
+	}
+
+	private void processTriplesOutput(String triplesOutput) {
+		String[] strings = triplesOutput.split("\n");
+		String sentenceTriples = "";
+		int lastSentenceNumber = 1;
+		int sentenceNumber;
+		for (String string : strings) {
+			Pattern digitPattern = Pattern.compile(".+\\|(\\d+)");
+			Matcher digitMatcher = digitPattern.matcher(string);
+			digitMatcher.find();
+			sentenceNumber = Integer.valueOf(digitMatcher.group(1));
+
+			if (lastSentenceNumber != sentenceNumber) {
+				sentenceToDependencyTriples.put(sentences.get(lastSentenceNumber - 1),
+						sentenceTriples);
+				sentenceTriples = "";
+				lastSentenceNumber = sentenceNumber;
+			}
+
+			sentenceTriples += string + "\n";
+		}
+		sentenceToDependencyTriples.put(sentences.get(lastSentenceNumber - 1), sentenceTriples);
+	}
+
+	public boolean outputsPresentForSentence(String sentence) {
+		String parseTree = sentenceToParseTree.get(sentence);
+		String triples = sentenceToDependencyTriples.get(sentence);
+		if (parseTree != null && triples != null) {
+			if (!parseTree.equals("") && !triples.equals("")) {
+				System.out.println();
+			}
+			return !parseTree.equals("") && !triples.equals("");
+		}
+		return false;
+	}
+
+	public int getNumSearchResults() {
 		return numSearchResults;
 	}
 
-	public synchronized void setNumSearchResults(int numPickedPassages) {
-		numSearchResults += numPickedPassages;
+	public synchronized void setNumSearchResults(int numSearchResults) {
+		this.numSearchResults = numSearchResults;
 	}
 
-	public synchronized void incrementNumSearchResults(int increment) {
-		numSearchResults += increment;
+	public int getNumSearchResultsProcessed() {
+		return numSearchResultsProcessed;
 	}
 
-	public synchronized Map<String, String> getSentenceToParseTree() {
-		return sentenceToParseTree;
-	}
-
-	public synchronized void addSentence(String sentence) {
-		sentences.add(sentence);
-		if (sentences.size() == numSearchResults) {
+	public synchronized void incrementNumSearchResultsProcessed() {
+		this.numSearchResultsProcessed++;
+//		if (sentences.size() == numSearchResults || sentences.size() >= 100) {
+		if (numSearchResultsProcessed == numSearchResults) {
 			getAlpinoOutput();
 		}
 	}
 
-	private void getAlpinoOutput() {
-		AlpinoConstituentAnnotator constituentAnnotator = AlpinoConstituentAnnotator.
-				getAlpinoConstituentAnnotator();
-		AlpinoDependencyAnnotator dependencyAnnotator = AlpinoDependencyAnnotator.
-				getAlpinoDependencyAnnotator();
-		for (String sentence : sentences) {
-			String parseOutput = constituentAnnotator.process(sentence);
-			String triplesOutput = dependencyAnnotator.process(sentence);
-		}
+	public String getParseTreeForSentence(String sentence) {
+		return sentenceToParseTree.get(sentence);
 	}
 
+	public void removeParseTreeForSentence(String sentence) {
+		sentenceToParseTree.remove(sentence);
+	}
+
+	public String getDependencyTriplesForSentence(String sentence) {
+		return sentenceToDependencyTriples.get(sentence);
+	}
+
+	public void removeDependencyTriplesForSentence(String sentence) {
+		sentenceToDependencyTriples.remove(sentence);
+	}
 }

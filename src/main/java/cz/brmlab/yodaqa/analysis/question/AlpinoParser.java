@@ -44,15 +44,19 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 	}
 
 	private void annotateConstituents(JCas jCas, List<Token> tokenList) {
-		constituentAnnotator = AlpinoConstituentAnnotator.getAlpinoConstituentAnnotator();
+		constituentAnnotator = new AlpinoConstituentAnnotator();
 		String output = constituentAnnotator.process(jCas, tokenList);
-		constituentAnnotator.processAlpinoOutput(jCas, tokenList, output);
+		if (output != null && !output.equals("")) {
+			constituentAnnotator.processAlpinoOutput(jCas, tokenList, output);
+		}
 	}
 
 	private void annotateDependencies(JCas jCas, List<Token> tokenList) {
-		dependencyAnnotator = AlpinoDependencyAnnotator.getAlpinoDependencyAnnotator();
+		dependencyAnnotator = new AlpinoDependencyAnnotator();
 		String output = dependencyAnnotator.process(jCas, tokenList);
-		dependencyAnnotator.processAlpinoOutput(jCas, tokenList, output);
+		if (output != null && !output.equals("")) {
+			dependencyAnnotator.processAlpinoOutput(jCas, tokenList, output);
+		}
 	}
 
 }
