@@ -46,7 +46,7 @@ public final class AnswerDashboard {
 		sentenceToDependencyTriples.put(sentence, "");
 	}
 
-	private synchronized void getAlpinoOutput() {
+	public synchronized void getAlpinoOutput() {
 		String input = "";
 		for (String sentence : sentences) {
 			input += sentence + '\n';
@@ -57,15 +57,13 @@ public final class AnswerDashboard {
 
 		AlpinoConstituentAnnotator constituentAnnotator = new AlpinoConstituentAnnotator();
 		AlpinoDependencyAnnotator dependencyAnnotator = new AlpinoDependencyAnnotator();
+		System.out.println("Start parsing");
 		String parseOutput = constituentAnnotator.process(input);
+		System.out.println("End parsing, start triples");
 		String triplesOutput = dependencyAnnotator.process(input);
+		System.out.println("End triples");
 		processParseOutput(parseOutput);
 		processTriplesOutput(triplesOutput);
-
-		synchronized (getFlag()) {
-			getFlag().notifyAll();
-		}
-//		sentences.clear();
 	}
 
 	private void processParseOutput(String parseOutput) {
@@ -120,7 +118,7 @@ public final class AnswerDashboard {
 	}
 
 	public synchronized void setNumSearchResults(int numSearchResults) {
-		this.numSearchResults = numSearchResults;
+		this.numSearchResults += numSearchResults;
 	}
 
 	public int getNumSearchResultsProcessed() {
@@ -131,7 +129,7 @@ public final class AnswerDashboard {
 		this.numSearchResultsProcessed++;
 //		if (sentences.size() == numSearchResults || sentences.size() >= 100) {
 		if (numSearchResultsProcessed == numSearchResults) {
-			getAlpinoOutput();
+//			getAlpinoOutput();
 		}
 	}
 

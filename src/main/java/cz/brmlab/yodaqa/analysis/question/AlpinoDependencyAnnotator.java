@@ -11,8 +11,6 @@ import org.apache.uima.jcas.JCas;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.cas.CASRuntimeException;
 
@@ -32,27 +30,11 @@ public class AlpinoDependencyAnnotator extends AlpinoAnnotator {
 			input += token.getCoveredText() + " ";
 		}
 		if (ppView != null) {
-			if (AnswerDashboard.getAnswerDashBoard().getDependencyTriplesForSentence(input) == null) {
-				return null;
-			}
-			try {
-				synchronized (AnswerDashboard.getAnswerDashBoard().getFlag()) {
-					AnswerDashboard.getAnswerDashBoard().getFlag().wait(500);
-				}
-			} catch (InterruptedException ex) {
-				Logger.getLogger(AlpinoConstituentAnnotator.class.getName()).log(Level.SEVERE, null,
-						ex);
-			}
-//			while (!AnswerDashboard.getAnswerDashBoard().outputsPresentForSentence(input)) {
-//				try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException ex) {
-//					Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
-//				}
-//			}
 			String parseOutput = AnswerDashboard.getAnswerDashBoard().
 					getDependencyTriplesForSentence(input);
-//			AnswerDashboard.getAnswerDashBoard().removeDependencyTriplesForSentence(input);
+			if (parseOutput.equals("")) {
+				System.out.println();
+			}
 			return parseOutput;
 		} else {
 			return process(input);

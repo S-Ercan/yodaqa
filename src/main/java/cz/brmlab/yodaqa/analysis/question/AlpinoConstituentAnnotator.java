@@ -21,8 +21,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import edu.stanford.nlp.util.IntPair;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -49,26 +47,10 @@ public class AlpinoConstituentAnnotator extends AlpinoAnnotator {
 			input += token.getCoveredText() + " ";
 		}
 		if (ppView != null) {
-			if (AnswerDashboard.getAnswerDashBoard().getParseTreeForSentence(input) == null) {
-				return null;
-			}
-			try {
-				synchronized (AnswerDashboard.getAnswerDashBoard().getFlag()) {
-					AnswerDashboard.getAnswerDashBoard().getFlag().wait(500);
-				}
-			} catch (InterruptedException ex) {
-				Logger.getLogger(AlpinoConstituentAnnotator.class.getName()).log(Level.SEVERE, null,
-						ex);
-			}
-//			while (!AnswerDashboard.getAnswerDashBoard().outputsPresentForSentence(input)) {
-//				try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException ex) {
-//					Logger.getLogger(AlpinoAnnotator.class.getName()).log(Level.SEVERE, null, ex);
-//				}
-//			}
 			String parseOutput = AnswerDashboard.getAnswerDashBoard().getParseTreeForSentence(input);
-//			AnswerDashboard.getAnswerDashBoard().removeParseTreeForSentence(input);
+			if (parseOutput.equals("")) {
+				System.out.println();
+			}
 			return parseOutput;
 		} else {
 			return process(input);
