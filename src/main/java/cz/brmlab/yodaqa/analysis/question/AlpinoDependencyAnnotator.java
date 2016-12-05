@@ -2,122 +2,100 @@ package cz.brmlab.yodaqa.analysis.question;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.NullArgumentException;
-import org.apache.uima.cas.CASException;
 import org.apache.uima.cas.Type;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import java.io.StringReader;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.transform.stream.StreamSource;
+import net.sf.saxon.Configuration;
+import net.sf.saxon.s9api.DocumentBuilder;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XQueryCompiler;
+import net.sf.saxon.s9api.XQueryEvaluator;
+import net.sf.saxon.s9api.XQueryExecutable;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmSequenceIterator;
 
 public class AlpinoDependencyAnnotator {
-
-	private List<Token> tokenList;
 
 	private final String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
 	private final String dependencyPackage = alpinoModelsPackage + ".dependency";
 
-	public AlpinoDependencyAnnotator(List<Token> tokenList) throws CASException {
-		setTokenList(tokenList);
+	private static AlpinoDependencyAnnotator dependencyAnnotator;
+	private Processor processor;
+	private XQueryExecutable queryExecutable;
+
+	private AlpinoDependencyAnnotator() {
+		initializeXQueryExecutable();
 	}
 
-	public List<Token> getTokenList() {
-		return tokenList;
+	public static AlpinoDependencyAnnotator getInstance() {
+		if (dependencyAnnotator == null) {
+			dependencyAnnotator = new AlpinoDependencyAnnotator();
+		}
+		return dependencyAnnotator;
 	}
 
-	public void setTokenList(List<Token> tokenList) {
-		this.tokenList = tokenList;
-	}
-
-	public String getDependencyOutput(String sentence) throws IOException {
+	private void initializeXQueryExecutable() {
 		String alpinoHome = System.getenv("ALPINO_HOME");
 		if (alpinoHome == null) {
 			throw new NullArgumentException("No \"ALPINO_HOME\" environment variable is specified.");
 		}
-		ProcessBuilder builder = new ProcessBuilder("/bin/bash", "bin/Alpino", "end_hook=triples", "-parse", "-notk");
-		builder.directory(new File(alpinoHome));
-		final Process process = builder.start();
+		File xQueryFile = new File(Paths.
+				get(alpinoHome, "TreebankTools", "Xquery", "triples_ids.xq").toString());
 
-		Thread inThread = new Thread() {
-			@Override
-			public void run() {
-				PrintWriter out = new PrintWriter(process.getOutputStream());
-				out.println(sentence);
-				out.flush();
-				out.close();
-			}
-		};
-		inThread.start();
+		// Create processor and build XML document
+		Processor processor = new Processor(new Configuration());
+		this.processor = processor;
 
-		MyRunnable myRunnable = new MyRunnable(process);
-		Thread outThread = new Thread(myRunnable);
-		outThread.start();
-
-		Thread err = new Thread() {
-			@Override
-			public void run() {
-				new InputStreamReader(process.getErrorStream());
-			}
-		};
-		err.start();
-
+		// Create compiler and compile XQuery file
+		XQueryCompiler compiler = processor.newXQueryCompiler();
+		XQueryExecutable queryExecutable = null;
 		try {
-			process.waitFor();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+			queryExecutable = compiler.compile(xQueryFile);
+		} catch (SaxonApiException | IOException ex) {
+			Logger.getLogger(AlpinoDependencyAnnotator.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		return myRunnable.getOutput();
+		this.queryExecutable = queryExecutable;
 	}
 
-	class MyRunnable implements Runnable {
-		private final Process process;
-		private String output;
-
-		public MyRunnable(Process process) {
-			this.process = process;
+	public String getDependencyTriplesFromParseTree(String parseOutput) {
+		StreamSource source = new StreamSource(new StringReader(parseOutput));
+		DocumentBuilder builder = processor.newDocumentBuilder();
+		XdmNode xdmNode = null;
+		try {
+			xdmNode = builder.build(source);
+		} catch (SaxonApiException ex) {
+			Logger.getLogger(AlpinoDependencyAnnotator.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
-		public String getOutput() {
-			return output;
-		}
-
-		public void setOutput(String output) {
-			this.output = output;
-		}
-
-		@Override
-		public void run() {
-			// For reading process output
-			InputStreamReader is = new InputStreamReader(process.getInputStream());
-			Scanner scanner = new Scanner(is);
-			// For writing process output to string
-			StringWriter strWriter = new StringWriter();
-			PrintWriter writer = new PrintWriter(strWriter, true);
-			// Read process output
-			while (scanner.hasNextLine()) {
-				writer.println(scanner.nextLine());
+		// Evaluate query on XML document
+		String triples = "";
+		if (queryExecutable != null && xdmNode != null) {
+			XQueryEvaluator queryEvaluator = queryExecutable.load();
+			queryEvaluator.setContextItem(xdmNode);
+			XdmSequenceIterator iterator = queryEvaluator.iterator();
+			while (iterator.hasNext()) {
+				triples += iterator.next().getStringValue();
 			}
-			setOutput(strWriter.toString());
-			try {
-				is.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			scanner.close();
 		}
+		return triples;
 	}
 
-	public List<Dependency> processDependencyTriples(JCas jCas, String output) {
+	public List<Dependency> processDependencyTriples(JCas jCas, List<Token> tokenList, String output) {
 		ArrayList<Dependency> dependencies = new ArrayList<>();
 		if (output == null || output.equals("")) {
 			System.out.println("No dependency triples received");
@@ -132,6 +110,9 @@ public class AlpinoDependencyAnnotator {
 					continue;
 				}
 				String aDependencyType = matcher.group(2).split("/")[1];
+				if (aDependencyType.equals("--")) {
+					continue;
+				}
 				String dependentString = matcher.group(3);
 				String dependencyTypeName = dependencyPackage + "." + aDependencyType.toUpperCase();
 
@@ -140,7 +121,7 @@ public class AlpinoDependencyAnnotator {
 					type = JCasUtil.getType(jCas, Dependency.class);
 				}
 
-				Pattern digitPattern = Pattern.compile(".+[\\[](\\d+)[,]");
+				Pattern digitPattern = Pattern.compile(".+[\\[](\\d+)[\\]]");
 				Matcher digitMatcher = digitPattern.matcher(governorString);
 				digitMatcher.find();
 				int governorIndex = Integer.valueOf(digitMatcher.group(1));
@@ -148,8 +129,8 @@ public class AlpinoDependencyAnnotator {
 				digitMatcher.find();
 				int dependentIndex = Integer.valueOf(digitMatcher.group(1));
 
-				Token governor = getTokenList().get(governorIndex);
-				Token dependent = getTokenList().get(dependentIndex);
+				Token governor = tokenList.get(governorIndex);
+				Token dependent = tokenList.get(dependentIndex);
 
 				Dependency dep = (Dependency) jCas.getCas().createFS(type);
 				dep.setDependencyType(aDependencyType);

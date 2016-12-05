@@ -1,7 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
 import cz.brmlab.yodaqa.model.PickedPassage.PickedPassageInfo;
-import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,7 +18,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
-import org.apache.uima.cas.CASRuntimeException;
 import org.apache.uima.cas.FSIterator;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.util.JCasUtil;
@@ -34,149 +32,127 @@ import org.xml.sax.SAXParseException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import java.util.Iterator;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
 
-    private String hostName = "localhost";
-    private int parsePortNumber = 42424;
+	private final String hostName = "localhost";
+	private final int parsePortNumber = 42424;
 
-    private Socket parseSocket;
-    private PrintWriter parseOut;
-    private BufferedReader parseIn;
+	@Override
+	public void initialize(UimaContext aContext) throws ResourceInitializationException {
+		super.initialize(aContext);
+	}
 
-    public void initialize(UimaContext aContext) throws ResourceInitializationException {
-        super.initialize(aContext);
-    }
+	@Override
+	public void process(JCas aJCas) throws AnalysisEngineProcessException {
+		Iterator<PickedPassageInfo> ppInfoIterator
+				= JCasUtil.select(aJCas, PickedPassageInfo.class).iterator();
 
-    @Override
-    public void process(JCas aJCas) throws AnalysisEngineProcessException {
+		FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.
+				getType(aJCas, Sentence.class))
+				.iterator();
 
-        Iterator<PickedPassageInfo> ppInfoIterator = JCasUtil.select(aJCas, PickedPassageInfo.class).iterator();
-        int numPassages = 0;
-        while (ppInfoIterator.hasNext()) {
-            numPassages += ppInfoIterator.next().getNumPassages();
-        }
-        System.out.println("Number of passages: " + numPassages);
+		while (typeToParseIterator.hasNext()) {
+			List<Token> tokenList = new ArrayList<>();
+			Annotation currAnnotationToParse = typeToParseIterator.next();
+			// Combine tokens into sentence
+			String sentence = "";
+			String text;
+			for (Token token : JCasUtil.selectCovered(Token.class, currAnnotationToParse)) {
+				tokenList.add(token);
+				text = token.getCoveredText();
+				text = Normalizer.normalize(text, Normalizer.Form.NFD);
+				sentence += text + ' ';
+			}
+			if (sentence.equals("")) {
+				continue;
+			}
+			// Get parse tree and dependency triples
+			String parseOutput = getParseOutput(sentence);
+			Document parseTree = processParseTree(parseOutput);
+			if (parseTree == null) {
+				System.out.println(
+						"No parse tree for the following sentence was received: " + sentence);
+				continue;
+			}
+			Node treeNode = parseTree.getDocumentElement();
+			annotateConstituents(tokenList, treeNode);
+			annotateDependencies(aJCas, parseOutput, tokenList);
+		}
+	}
 
-        FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.getType(aJCas, Sentence.class))
-                .iterator();
+	private void annotateConstituents(List<Token> tokenList, Node treeNode) {
+		AlpinoConstituentAnnotator annotator;
+		try {
+			annotator = new AlpinoConstituentAnnotator(tokenList);
+			annotator.createConstituentAnnotationFromTree(treeNode, null, true);
+		} catch (CASException e) {
+			e.printStackTrace();
+		}
+	}
 
-        while (typeToParseIterator.hasNext()) {
-            try {
-                // TODO: initializing this once (which should be done) leads to
-                // problems in case typeToParseIterator does have multiple
-                // entries; figure out a fix so we don't have to reinitialize
-                // this on every iteration
-                parseSocket = new Socket(hostName, parsePortNumber);
-                parseOut = new PrintWriter(parseSocket.getOutputStream(), true);
-                parseIn = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+	private void annotateDependencies(JCas aJCas, String parseOutput, List<Token> tokenList) {
+		AlpinoDependencyAnnotator depAnnotator;
+		depAnnotator = AlpinoDependencyAnnotator.getInstance();
+		String dependencyOutput;
+		dependencyOutput = depAnnotator.getDependencyTriplesFromParseTree(parseOutput);
+		depAnnotator.processDependencyTriples(aJCas, tokenList, dependencyOutput);
+	}
 
-            List<Token> tokenList = new ArrayList<Token>();
-            Annotation currAnnotationToParse = typeToParseIterator.next();
-            // Combine tokens into sentence
-            String sentence = "";
-            String text;
-            for (Token token : JCasUtil.selectCovered(Token.class, currAnnotationToParse)) {
-                tokenList.add(token);
-                text = token.getCoveredText();
-                text = Normalizer.normalize(text, Normalizer.Form.NFD);
-                sentence += text + ' ';
-            }
-            if (sentence.equals("")) {
-                continue;
-            }
-            // Get parse tree and dependency triples
-            String parseOutput = getParseOutput(sentence);
-            Document parseTree = processParseTree(parseOutput);
-            if (parseTree == null) {
-                System.out.println("No parse tree for the following sentence was received: " + sentence);
-                continue;
-            }
-            annotateConstituents(tokenList, parseTree.getDocumentElement());
-            annotateDependencies(aJCas, sentence, tokenList);
-            try {
-                JCas ppView = aJCas.getView("PickedPassages");
-            } catch (CASRuntimeException e) {
-//				List<Dependency> dependencies = annotateDependencies(aJCas, sentence, tokenList);
-            } catch (CASException e) {
-                e.printStackTrace();
-            }
-        }
-        if (parseSocket != null) {
-            try {
-                parseSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+	private String getParseOutput(String sentence) {
+		Socket parseSocket = null;
+		PrintWriter parseOut = null;
+		BufferedReader parseIn = null;
+		try {
+			parseSocket = new Socket(hostName, parsePortNumber);
+			parseOut = new PrintWriter(parseSocket.getOutputStream(), true);
+			parseIn = new BufferedReader(new InputStreamReader(parseSocket.getInputStream()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (parseSocket == null || parseOut == null || parseIn == null) {
+			System.out.println("Couldn't initialize communication objects.");
+			return "";
+		}
+		parseOut.println(sentence);
+		String line;
+		String output = "";
+		try {
+			while ((line = parseIn.readLine()) != null) {
+				output += line;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (parseSocket != null) {
+			try {
+				parseSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return output;
+	}
 
-    private void annotateConstituents(List<Token> tokenList, Node treeNode) {
-        AlpinoConstituentAnnotator annotator;
-        Annotation annotation = null;
-        try {
-            annotator = new AlpinoConstituentAnnotator(tokenList);
-            annotation = annotator.createConstituentAnnotationFromTree(treeNode, null, true);
-        } catch (CASException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void annotateDependencies(JCas aJCas, String sentence, List<Token> tokenList) {
-        AlpinoDependencyAnnotator depAnnotator;
-        List<Dependency> dependencies = null;
-        try {
-            depAnnotator = new AlpinoDependencyAnnotator(tokenList);
-            String dependencyOutput;
-            try {
-                dependencyOutput = depAnnotator.getDependencyOutput(sentence);
-                dependencies = depAnnotator.processDependencyTriples(aJCas, dependencyOutput);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (CASException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String getParseOutput(String sentence) {
-        // TODO: investigate passing all sentences off at once during answer analysis.
-        parseOut.println(sentence);
-        String line;
-        String output = "";
-        try {
-            while ((line = parseIn.readLine()) != null) {
-                output += line;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return output;
-    }
-
-    private Document processParseTree(String parseOutput) {
-        Document parseTree = null;
-        try {
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            parseTree = dBuilder.parse(new InputSource(new StringReader(parseOutput)));
-            parseTree.getDocumentElement().normalize();
-            return parseTree;
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXParseException e) {
-            System.err.println("Could not parse string.");
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return parseTree;
-    }
+	private Document processParseTree(String parseOutput) {
+		Document parseTree = null;
+		try {
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			parseTree = dBuilder.parse(new InputSource(new StringReader(parseOutput)));
+			parseTree.getDocumentElement().normalize();
+			return parseTree;
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (SAXParseException e) {
+			System.err.println("Could not parse string.");
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return parseTree;
+	}
 
 }

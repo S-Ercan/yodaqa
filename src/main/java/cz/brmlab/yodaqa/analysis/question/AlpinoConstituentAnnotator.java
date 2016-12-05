@@ -51,7 +51,8 @@ public class AlpinoConstituentAnnotator {
 		this.tokenList = tokenList;
 	}
 
-	public Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS, boolean aCreatePos) {
+	public Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS,
+			boolean aCreatePos) {
 		if (!aNode.getNodeName().equals("node")) {
 			if (aNode.getChildNodes().getLength() > 0) {
 				return createConstituentAnnotationFromTree(aNode.getChildNodes().item(1), null, true);
@@ -81,8 +82,9 @@ public class AlpinoConstituentAnnotator {
 
 		if (catNode != null) {
 			// add annotation to annotation tree
-			Constituent constituent = createConstituentAnnotation(span.getSource(), span.getTarget(),
-					catNode.getNodeValue(), null);
+			Constituent constituent
+					= createConstituentAnnotation(span.getSource(), span.getTarget(),
+							catNode.getNodeValue(), null);
 			// link to parent
 			if (aParentFS != null) {
 				constituent.setParent(aParentFS);
@@ -92,7 +94,8 @@ public class AlpinoConstituentAnnotator {
 			List<Annotation> childAnnotations = new ArrayList<Annotation>();
 			NodeList childNodes = aNode.getChildNodes();
 			for (int i = 0; i < childNodes.getLength(); i++) {
-				Annotation childAnnotation = createConstituentAnnotationFromTree(childNodes.item(i), constituent,
+				Annotation childAnnotation = createConstituentAnnotationFromTree(childNodes.item(i),
+						constituent,
 						aCreatePos);
 				if (childAnnotation != null) {
 					childAnnotations.add(childAnnotation);
@@ -115,7 +118,8 @@ public class AlpinoConstituentAnnotator {
 			return constituent;
 		} else if (posNode != null) {
 			// create POS-annotation (annotation over the token)
-			POS pos = createPOSAnnotation(span.getSource(), span.getTarget(), posNode.getNodeValue());
+			POS pos
+					= createPOSAnnotation(span.getSource(), span.getTarget(), posNode.getNodeValue());
 
 			// only add POS to index if we want POS-tagging
 			if (aCreatePos) {
@@ -127,7 +131,7 @@ public class AlpinoConstituentAnnotator {
 			if (aParentFS != null) {
 				token.setParent(aParentFS);
 			}
-			
+
 			Lemma lemmaAnno = new Lemma(jCas, token.getBegin(), token.getEnd());
 			lemmaAnno.setValue(lemmaNode.getNodeValue());
 			jCas.addFsToIndexes(lemmaAnno);
@@ -144,9 +148,11 @@ public class AlpinoConstituentAnnotator {
 		if (aConstituentType.equals("top")) {
 			constType = jCas.getTypeSystem().getType(ROOT.class.getName());
 		} else {
-			constType = jCas.getTypeSystem().getType(constituentPackage + "." + aConstituentType.toUpperCase());
+			constType = jCas.getTypeSystem().getType(constituentPackage + "." + aConstituentType.
+					toUpperCase());
 		}
-		Constituent constAnno = (Constituent) jCas.getCas().createAnnotation(constType, aBegin, aEnd);
+		Constituent constAnno = (Constituent) jCas.getCas().
+				createAnnotation(constType, aBegin, aEnd);
 		constAnno.setConstituentType(aConstituentType);
 		constAnno.setSyntacticFunction(aSyntacticFunction);
 
