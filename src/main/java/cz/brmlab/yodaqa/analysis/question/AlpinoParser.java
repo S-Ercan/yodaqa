@@ -1,6 +1,5 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import cz.brmlab.yodaqa.model.PickedPassage.PickedPassageInfo;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,7 +16,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.cas.CASException;
 import org.apache.uima.cas.FSIterator;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.util.JCasUtil;
@@ -32,7 +30,6 @@ import org.xml.sax.SAXParseException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import java.util.Iterator;
 
 public class AlpinoParser extends JCasAnnotator_ImplBase {
 
@@ -46,12 +43,8 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		Iterator<PickedPassageInfo> ppInfoIterator
-				= JCasUtil.select(aJCas, PickedPassageInfo.class).iterator();
-
 		FSIterator<Annotation> typeToParseIterator = aJCas.getAnnotationIndex(JCasUtil.
-				getType(aJCas, Sentence.class))
-				.iterator();
+				getType(aJCas, Sentence.class)).iterator();
 
 		while (typeToParseIterator.hasNext()) {
 			List<Token> tokenList = new ArrayList<>();
@@ -77,29 +70,28 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				continue;
 			}
 			Node treeNode = parseTree.getDocumentElement();
-			annotateConstituents(tokenList, treeNode);
-			annotateDependencies(aJCas, parseOutput, tokenList);
+			annotateConstituents(aJCas, tokenList, treeNode);
+			annotateDependencies(aJCas, tokenList, parseOutput);
 		}
 	}
 
-	private void annotateConstituents(List<Token> tokenList, Node treeNode) {
-		AlpinoConstituentAnnotator annotator;
-		try {
-			annotator = new AlpinoConstituentAnnotator(tokenList);
-			annotator.createConstituentAnnotationFromTree(treeNode, null, true);
-		} catch (CASException e) {
-			e.printStackTrace();
-		}
+	private void annotateConstituents(JCas aJCas, List<Token> tokenList, Node treeNode) {
+		new AlpinoConstituentAnnotator(tokenList).createConstituentAnnotationFromTree(aJCas,
+				treeNode, null, true);
 	}
 
-	private void annotateDependencies(JCas aJCas, String parseOutput, List<Token> tokenList) {
-		AlpinoDependencyAnnotator depAnnotator;
-		depAnnotator = AlpinoDependencyAnnotator.getInstance();
-		String dependencyOutput;
-		dependencyOutput = depAnnotator.getDependencyTriplesFromParseTree(parseOutput);
+	private void annotateDependencies(JCas aJCas, List<Token> tokenList, String parseOutput) {
+		AlpinoDependencyAnnotator depAnnotator = AlpinoDependencyAnnotator.getInstance();
+		String dependencyOutput = depAnnotator.getDependencyTriplesFromParseTree(parseOutput);
 		depAnnotator.processDependencyTriples(aJCas, tokenList, dependencyOutput);
 	}
 
+	private String getSentenceFromTokens() {
+		String sentence = "";
+		
+		return sentence;
+	}
+	
 	private String getParseOutput(String sentence) {
 		Socket parseSocket = null;
 		PrintWriter parseOut = null;

@@ -9,14 +9,10 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.brmlab.yodaqa.analysis.FindReqParse;
 import cz.brmlab.yodaqa.analysis.tycor.LATByWordnet;
 import cz.brmlab.yodaqa.analysis.tycor.LATMatchTyCor;
 import cz.brmlab.yodaqa.analysis.tycor.LATNormalize;
 
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
-
-import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createPrimitiveDescription;
 
 /**
@@ -50,8 +46,8 @@ public class AnswerAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		 * so tokens, POS, lemmas, constituents and dependencies.
 		 * One exception is if the source sentence was too long;
 		 * in that case, rerun StanfordParser just on the answer. */
-		builder.add(createPrimitiveDescription(FindReqParse.class),
-			CAS.NAME_DEFAULT_SOFA, "Answer");
+//		builder.add(createPrimitiveDescription(FindReqParse.class),
+//			CAS.NAME_DEFAULT_SOFA, "Answer");
 //		builder.add(createPrimitiveDescription(
 //				StanfordParser.class,
 //				StanfordParser.PARAM_MAX_TOKENS, 50, // more takes a lot of RAM and is sloow, StanfordParser is O(N^2)

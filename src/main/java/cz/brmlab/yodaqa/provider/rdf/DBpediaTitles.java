@@ -358,7 +358,6 @@ public class DBpediaTitles extends DBpediaLookup {
 			jr.beginArray();
 			while (jr.hasNext()) {
 				Article o = gson.fromJson(jr, Article.class);
-				System.out.println(o.name + ", " + o.pageID);
 				// Record all exact-matching entities,
 				// or the single nearest fuzzy-matched
 				// one.

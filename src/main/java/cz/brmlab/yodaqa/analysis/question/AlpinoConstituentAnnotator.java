@@ -3,7 +3,6 @@ package cz.brmlab.yodaqa.analysis.question;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.uima.cas.CASException;
 import org.apache.uima.cas.FeatureStructure;
 import org.apache.uima.cas.Type;
 import org.apache.uima.jcas.JCas;
@@ -22,25 +21,14 @@ import edu.stanford.nlp.util.IntPair;
 
 public class AlpinoConstituentAnnotator {
 
-	private String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
-	private String constituentPackage = alpinoModelsPackage + ".constituent";
-	private String posPackage = alpinoModelsPackage + ".pos";
-
-	private JCas jCas = null;
+	private final String alpinoModelsPackage = "cz.brmlab.yodaqa.model.alpino.type";
+	private final String constituentPackage = alpinoModelsPackage + ".constituent";
+	private final String posPackage = alpinoModelsPackage + ".pos";
 
 	private List<Token> tokenList;
 
-	public AlpinoConstituentAnnotator(List<Token> tokenList) throws CASException {
+	public AlpinoConstituentAnnotator(List<Token> tokenList) {
 		setTokenList(tokenList);
-		setJCas(tokenList.get(0).getCAS().getJCas());
-	}
-
-	public JCas getJCas() {
-		return jCas;
-	}
-
-	public void setJCas(JCas aJCas) {
-		jCas = aJCas;
 	}
 
 	public List<Token> getTokenList() {
@@ -51,11 +39,12 @@ public class AlpinoConstituentAnnotator {
 		this.tokenList = tokenList;
 	}
 
-	public Annotation createConstituentAnnotationFromTree(Node aNode, Annotation aParentFS,
-			boolean aCreatePos) {
+	public Annotation createConstituentAnnotationFromTree(JCas jCas, Node aNode,
+			Annotation aParentFS, boolean aCreatePos) {
 		if (!aNode.getNodeName().equals("node")) {
 			if (aNode.getChildNodes().getLength() > 0) {
-				return createConstituentAnnotationFromTree(aNode.getChildNodes().item(1), null, true);
+				return createConstituentAnnotationFromTree(jCas, aNode.getChildNodes().item(1), null,
+						true);
 			} else {
 				return null;
 			}
@@ -83,7 +72,7 @@ public class AlpinoConstituentAnnotator {
 		if (catNode != null) {
 			// add annotation to annotation tree
 			Constituent constituent
-					= createConstituentAnnotation(span.getSource(), span.getTarget(),
+					= createConstituentAnnotation(jCas, span.getSource(), span.getTarget(),
 							catNode.getNodeValue(), null);
 			// link to parent
 			if (aParentFS != null) {
@@ -94,9 +83,8 @@ public class AlpinoConstituentAnnotator {
 			List<Annotation> childAnnotations = new ArrayList<Annotation>();
 			NodeList childNodes = aNode.getChildNodes();
 			for (int i = 0; i < childNodes.getLength(); i++) {
-				Annotation childAnnotation = createConstituentAnnotationFromTree(childNodes.item(i),
-						constituent,
-						aCreatePos);
+				Annotation childAnnotation = createConstituentAnnotationFromTree(jCas, childNodes.
+						item(i), constituent, aCreatePos);
 				if (childAnnotation != null) {
 					childAnnotations.add(childAnnotation);
 				}
@@ -118,8 +106,8 @@ public class AlpinoConstituentAnnotator {
 			return constituent;
 		} else if (posNode != null) {
 			// create POS-annotation (annotation over the token)
-			POS pos
-					= createPOSAnnotation(span.getSource(), span.getTarget(), posNode.getNodeValue());
+			POS pos = createPOSAnnotation(jCas, span.getSource(), span.getTarget(), posNode.
+					getNodeValue());
 
 			// only add POS to index if we want POS-tagging
 			if (aCreatePos) {
@@ -142,7 +130,8 @@ public class AlpinoConstituentAnnotator {
 		return null;
 	}
 
-	public Constituent createConstituentAnnotation(int aBegin, int aEnd, String aConstituentType,
+	public Constituent createConstituentAnnotation(JCas jCas, int aBegin, int aEnd,
+			String aConstituentType,
 			String aSyntacticFunction) {
 		Type constType;
 		if (aConstituentType.equals("top")) {
@@ -159,7 +148,7 @@ public class AlpinoConstituentAnnotator {
 		return constAnno;
 	}
 
-	public POS createPOSAnnotation(int aBegin, int aEnd, String aPosType) {
+	public POS createPOSAnnotation(JCas jCas, int aBegin, int aEnd, String aPosType) {
 		Type type = jCas.getTypeSystem().getType(posPackage + "." + aPosType.toUpperCase());
 		// create instance of the desired type
 		POS anno = (POS) jCas.getCas().createAnnotation(type, aBegin, aEnd);

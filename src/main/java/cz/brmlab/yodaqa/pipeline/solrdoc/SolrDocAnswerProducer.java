@@ -2,7 +2,6 @@ package cz.brmlab.yodaqa.pipeline.solrdoc;
 
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.cas.CAS;
-import org.apache.uima.fit.component.CasDumpWriter;
 import org.apache.uima.fit.factory.AggregateBuilder;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.factory.FlowControllerFactory;
@@ -13,7 +12,6 @@ import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
 
 import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolLemmatizer;
-//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 
 /**
  * From the QuestionCAS, generate a bunch of CandidateAnswerCAS instances.
