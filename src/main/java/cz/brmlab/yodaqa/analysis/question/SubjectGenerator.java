@@ -86,9 +86,6 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 			addSubject(jcas, stok);
 			genSubject = stok.getCoveredText();
 		}
-
-		System.out.println("Shortest sentence subject: " + stok.getCoveredText());
-
 		/*
 		 * However, just the token is often pretty useless, yielding e.g. - How
 		 * hot does it get in Death Valley? (it) - What is the southwestern-most
@@ -103,7 +100,6 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		 * not be in the text word-by-word.)
 		 */
 		NP np = TreeUtil.widestCoveringAlpinoNP(stok);
-		System.out.println("Longest sentence subject: " + np.getCoveredText());
 		if (np == null) {
 			// <<How long before bankruptcy is removed from a credit report?>>
 			return;

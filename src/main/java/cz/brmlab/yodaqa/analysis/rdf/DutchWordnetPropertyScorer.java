@@ -19,12 +19,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Counts probability of property containing a correct answer to given question.
- * Uses SynonymsPCCP to estimate similarity of (cooked) property to LAT.
+ * Counts probability of property containing a correct answer to given question. Uses SynonymsPCCP
+ * to estimate similarity of (cooked) property to LAT.
  *
  * XXX: Method duplication with PropertyGloVeScoring.
  */
 public class DutchWordnetPropertyScorer {
+
 	private static DutchWordnetPropertyScorer propScorer;
 	private static WordnetData wordnetData;
 
@@ -46,7 +47,8 @@ public class DutchWordnetPropertyScorer {
 	private DutchWordnetPropertyScorer() {
 		String odwnResources = System.getenv("ODWN_RESOURCES");
 		if (odwnResources == null) {
-			throw new NullArgumentException("No \"ODWN_RESOURCES\" environment variable is specified.");
+			throw new NullArgumentException(
+					"No \"ODWN_RESOURCES\" environment variable is specified.");
 		}
 
 		WordnetLmfSaxParser parser = new WordnetLmfSaxParser();
@@ -73,7 +75,6 @@ public class DutchWordnetPropertyScorer {
 				maxSimilarityScore = similarityScore;
 			}
 		}
-		System.out.println("Score for " + prop + ": " + maxSimilarityScore);
 		return maxSimilarityScore;
 	}
 
@@ -97,15 +98,21 @@ public class DutchWordnetPropertyScorer {
 			 */
 			String[] words = prop.split(" ");
 			Double score = null;
+			if (words.length == 0) {
+				return score;
+			}
 			Double s0 = getPropTextScore(words[0]);
-			if (s0 != null)
+			if (s0 != null) {
 				score = s0;
+			}
 			Double s1 = getPropTextScore(words[words.length - 1]);
-			if (s1 != null)
-				if (score == null)
+			if (s1 != null) {
+				if (score == null) {
 					score = s1;
-				else
+				} else {
 					score += s1;
+				}
+			}
 			return score;
 		}
 	}

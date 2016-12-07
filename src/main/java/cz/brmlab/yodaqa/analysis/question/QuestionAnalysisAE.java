@@ -16,14 +16,15 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 /**
  * Annotate the QuestionCAS.
  *
- * This is an aggregate AE that will run a variety of annotators on the
- * QuestionCAS, preparing it for the PrimarySearch and AnswerGenerator stages.
+ * This is an aggregate AE that will run a variety of annotators on the QuestionCAS, preparing it
+ * for the PrimarySearch and AnswerGenerator stages.
  */
-
 public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
+
 	final static Logger logger = LoggerFactory.getLogger(QuestionAnalysisAE.class);
 
-	public static AnalysisEngineDescription createEngineDescription() throws ResourceInitializationException {
+	public static AnalysisEngineDescription createEngineDescription() throws
+			ResourceInitializationException {
 		AggregateBuilder builder = new AggregateBuilder();
 
 		/*
@@ -31,16 +32,15 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		 * on the shoulders of)
 		 */
 
-		/* Token features: */
-
-		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class));
+ /* Token features: */
+		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class,
+				OpenNlpSegmenter.PARAM_LANGUAGE, "nl"));
 		builder.add(AnalysisEngineFactory.createEngineDescription(AlpinoParser.class));
 
 		/* Named Entities: */
 		builder.add(OpenNlpNamedEntities.createEngineDescription());
 
 		/* Okay! Now, we can proceed with our key tasks. */
-
 		builder.add(AnalysisEngineFactory.createEngineDescription(FocusGenerator.class));
 		builder.add(AnalysisEngineFactory.createEngineDescription(FocusNameProxy.class));
 		builder.add(AnalysisEngineFactory.createEngineDescription(SubjectGenerator.class));
@@ -75,7 +75,8 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		}
 
 		AnalysisEngineDescription aed = builder.createAggregateDescription();
-		aed.getAnalysisEngineMetaData().setName("cz.brmlab.yodaqa.analysis.question.QuestionAnalysisAE");
+		aed.getAnalysisEngineMetaData().setName(
+				"cz.brmlab.yodaqa.analysis.question.QuestionAnalysisAE");
 		return aed;
 	}
 }

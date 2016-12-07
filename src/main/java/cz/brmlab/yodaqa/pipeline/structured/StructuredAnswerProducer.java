@@ -40,7 +40,8 @@ public class StructuredAnswerProducer /* XXX: extends AggregateBuilder ? */ {
 		 * preprocessing expected by AnswerAnalysis. */
 
  /* Tokenize: */
-		builder.add(AnalysisEngineFactory.createEngineDescription(LanguageToolSegmenter.class),
+		builder.add(AnalysisEngineFactory.createEngineDescription(LanguageToolSegmenter.class,
+				LanguageToolSegmenter.PARAM_LANGUAGE, "nl"),
 				CAS.NAME_DEFAULT_SOFA, "Answer");
 
 		/* Note that from now on, we should actually typically

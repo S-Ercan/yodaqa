@@ -10,17 +10,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.flow.asb.ParallelEngineFactory;
+import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolSegmenter;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createPrimitiveDescription;
 
 /**
- * Extract most interesting passages from SearchResultCAS
- * for further analysis in the PickedPassages view.
+ * Extract most interesting passages from SearchResultCAS for further analysis in the PickedPassages
+ * view.
  *
- * This is an aggregate AE that will run a variety of annotators on the
- * SearchResultCAS, focusing it on just a few most interesting passages. */
-
+ * This is an aggregate AE that will run a variety of annotators on the SearchResultCAS, focusing it
+ * on just a few most interesting passages.
+ */
 public class PassageExtractorAE /* XXX: extends AggregateBuilder ? */ {
+
 	final static Logger logger = LoggerFactory.getLogger(PassageExtractorAE.class);
 
 	/* passSelection parameter values */
@@ -36,35 +38,40 @@ public class PassageExtractorAE /* XXX: extends AggregateBuilder ? */ {
 		// with incomplete sentences e.g. separated by paragraphs etc.
 		// However, StanfordSegmenter handles numerical quantities
 		// (like 10,900) much better.
-		builder.add(createPrimitiveDescription(StanfordSegmenter.class),
-			CAS.NAME_DEFAULT_SOFA, "Result");
+//		builder.add(createPrimitiveDescription(StanfordSegmenter.class),
+//			CAS.NAME_DEFAULT_SOFA, "Result");
+		builder.add(createPrimitiveDescription(LanguageToolSegmenter.class,
+				LanguageToolSegmenter.PARAM_LANGUAGE, "nl"),
+				CAS.NAME_DEFAULT_SOFA, "Result");
 
 		/* At this point, we can filter the source to keep
 		 * only sentences and tokens we care about: */
 		builder.add(createPrimitiveDescription(PassSetup.class));
 		switch (passSelection) {
 
-		case PARAM_PASS_SEL_BYCLUE:
-			builder.add(createPrimitiveDescription(PassByClue.class));
-			builder.add(createPrimitiveDescription(PassScoreSimple.class),
-				CAS.NAME_DEFAULT_SOFA, "Passages");
-			break;
+			case PARAM_PASS_SEL_BYCLUE:
+				builder.add(createPrimitiveDescription(PassByClue.class));
+				builder.add(createPrimitiveDescription(PassScoreSimple.class),
+						CAS.NAME_DEFAULT_SOFA, "Passages");
+				break;
 
-		case PARAM_PASS_SEL_FIRST:
-			builder.add(createPrimitiveDescription(PassFirst.class));
-			break;
+			case PARAM_PASS_SEL_FIRST:
+				builder.add(createPrimitiveDescription(PassFirst.class));
+				break;
 		}
 
 		/* Finally cut these only to the most interesting N sentences
 		 * and copy these over to new view PickedPassages. */
 		builder.add(createPrimitiveDescription(PassFilter.class));
 
-		if (passSelection == PARAM_PASS_SEL_BYCLUE)
+		if (passSelection == PARAM_PASS_SEL_BYCLUE) {
 			builder.add(createPrimitiveDescription(PassGSHook.class,
-						ParallelEngineFactory.PARAM_NO_MULTIPROCESSING, 1));
+					ParallelEngineFactory.PARAM_NO_MULTIPROCESSING, 1));
+		}
 
 		AnalysisEngineDescription aed = builder.createAggregateDescription();
-		aed.getAnalysisEngineMetaData().setName("cz.brmlab.yodaqa.analysis.passextract.PassageExtractorAE");
+		aed.getAnalysisEngineMetaData().setName(
+				"cz.brmlab.yodaqa.analysis.passextract.PassageExtractorAE");
 		return aed;
 	}
 }
