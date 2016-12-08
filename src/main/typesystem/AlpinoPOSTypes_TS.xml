@@ -69,18 +69,28 @@
       <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</supertypeName>
     </typeDescription>
     <typeDescription>
+      <name>cz.brmlab.yodaqa.model.alpino.type.pos.PREFIX</name>
+      <description>Prefix</description>
+      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</supertypeName>
+    </typeDescription>
+    <typeDescription>
       <name>cz.brmlab.yodaqa.model.alpino.type.pos.PREP</name>
       <description>Punctuation</description>
       <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</supertypeName>
     </typeDescription>
     <typeDescription>
       <name>cz.brmlab.yodaqa.model.alpino.type.pos.PUNCT</name>
-      <description>Subordinating conjunction</description>
+      <description>Punctuation</description>
+      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</supertypeName>
+    </typeDescription>
+    <typeDescription>
+      <name>cz.brmlab.yodaqa.model.alpino.type.pos.TAG</name>
+      <description>Tag</description>
       <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</supertypeName>
     </typeDescription>
     <typeDescription>
       <name>cz.brmlab.yodaqa.model.alpino.type.pos.VERB</name>
-      <description>Symbol</description>
+      <description>Verb</description>
       <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</supertypeName>
     </typeDescription>
     <typeDescription>

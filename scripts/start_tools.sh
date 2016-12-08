@@ -12,7 +12,7 @@ PROLOGMAXSIZE=800M Alpino -notk -veryfast user_max=20000\
 
 echo "Starting Solr server..."
 cd $SOLR_HOME
-nohup bin/solr start -s example/robotica -m 4g > "$logs_dir/solr.log" 2>&1 &
+nohup bin/solr start -s example/nlwiki -m 4g > "$logs_dir/solr.log" 2>&1 &
 
 echo "Starting label lookup service..."
 cd $LABEL_LOOKUP_HOME
