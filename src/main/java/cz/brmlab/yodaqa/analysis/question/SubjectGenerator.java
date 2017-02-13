@@ -14,6 +14,7 @@ import cz.brmlab.yodaqa.analysis.TreeUtil;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.Subject;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.REL;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -21,6 +22,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.ROOT;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.WHNP;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Subject annotations in a QuestionCAS. These represent key information stored
@@ -109,6 +112,12 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		}
 		addSubject(jcas, np);
 
+		List<REL> rels = new ArrayList(JCasUtil.select(jcas, REL.class));
+		if (rels.size() == 1) {
+			NP npWithoutRel = new NP(jcas, np.getBegin(), rels.get(0).getBegin() - 1);
+			addSubject(jcas, npWithoutRel);
+		}
+		
 		/*
 		 * However, if there *is* a NamedEntity in the covering NP, add it as a
 		 * subject too - NamedEntity subject clues can be treated as reliable.
