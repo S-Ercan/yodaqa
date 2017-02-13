@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import cz.brmlab.yodaqa.analysis.tycor.LATByWordnet;
 import cz.brmlab.yodaqa.io.debug.DumpConstituents;
 import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
-import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.languagetool.LanguageToolSegmenter;
 
 /**
  * Annotate the QuestionCAS.
@@ -33,8 +33,8 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		 */
 
  /* Token features: */
-		builder.add(AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class,
-				OpenNlpSegmenter.PARAM_LANGUAGE, "nl"));
+		builder.add(AnalysisEngineFactory.createEngineDescription(LanguageToolSegmenter.class,
+				LanguageToolSegmenter.PARAM_LANGUAGE, "nl"));
 		builder.add(AnalysisEngineFactory.createEngineDescription(AlpinoParser.class));
 
 		/* Named Entities: */
