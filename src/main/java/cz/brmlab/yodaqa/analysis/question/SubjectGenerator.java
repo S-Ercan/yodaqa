@@ -26,15 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Subject annotations in a QuestionCAS. These represent key information stored
- * in the question that is then used in primary search.
+ * Subject annotations in a QuestionCAS. These represent key information stored in the question that
+ * is then used in primary search.
  *
- * This generates clues from the question subject, i.e. NSUBJ annotation. E.g.
- * in "When did Einstein die?", subject is "Einstein" and will have such a clue
- * generated.
+ * This generates clues from the question subject, i.e. NSUBJ annotation. E.g. in "When did Einstein
+ * die?", subject is "Einstein" and will have such a clue generated.
  */
-
 public class SubjectGenerator extends JCasAnnotator_ImplBase {
+
 	final Logger logger = LoggerFactory.getLogger(SubjectGenerator.class);
 
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -47,7 +46,8 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		}
 	}
 
-	protected void processSentence(JCas jcas, Constituent sentence) throws AnalysisEngineProcessException {
+	protected void processSentence(JCas jcas, Constituent sentence) throws
+			AnalysisEngineProcessException {
 		for (SU subj : JCasUtil.select(jcas, SU.class)) {
 			processSubj(jcas, subj);
 		}
@@ -57,18 +57,21 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		Token stok = subj.getDependent();
 		Annotation parent = stok.getParent();
 		Constituent cparent = null;
-		if (parent != null && parent instanceof Constituent)
+		if (parent != null && parent instanceof Constituent) {
 			cparent = (Constituent) parent;
+		}
 
 		/* Skip question word focuses (e.g. "Who"). */
-		if (stok.getPos().getPosValue().matches("^W.*"))
+		if (stok.getPos().getPosValue().matches("^W.*")) {
 			return;
+		}
 		/*
 		 * In "What country is Berlin in?", "country" (with parent
 		 * "What country" WHNP) is *also* a NSUBJ - skip that one.
 		 */
-		if (cparent instanceof WHNP)
+		if (cparent instanceof WHNP) {
 			return;
+		}
 
 		String genSubject = null;
 
@@ -84,8 +87,9 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		 * N.B. Sometimes NamedEntity detection fails (e.g. "How high is Pikes
 		 * peak?"). So when there's none, just add the token as the subject.
 		 */
-		/* But do not add subjects like "it". */
-		if (genSubject == null && stok.getPos().getPosValue().matches(ClueByTokenConstituent.TOKENMATCH)) {
+ /* But do not add subjects like "it". */
+		if (genSubject == null && stok.getPos().getPosValue().matches(
+				ClueByTokenConstituent.TOKENMATCH)) {
 			addSubject(jcas, stok);
 			genSubject = stok.getCoveredText();
 		}
@@ -97,7 +101,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		 * Beatles album? (name) so we rather add the widest covering NP (e.g.
 		 * "capital of Laos").
 		 */
-		/*
+ /*
 		 * (Adding just the token, e.g. "capital", above too also makes sense as
 		 * it can be treated as reliable compared to the full phrase which may
 		 * not be in the text word-by-word.)
@@ -105,7 +109,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		NP np = TreeUtil.widestCoveringAlpinoNP(stok);
 		if (np == null) {
 			// <<How long before bankruptcy is removed from a credit report?>>
-			return;
+			np = new NP(jcas, stok.getBegin(), stok.getEnd());
 		} else if (np.getCoveredText().equals(genSubject)) {
 			// <<it>> is often a NP too, or other short tokens
 			return;
@@ -117,7 +121,7 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 			NP npWithoutRel = new NP(jcas, np.getBegin(), rels.get(0).getBegin() - 1);
 			addSubject(jcas, npWithoutRel);
 		}
-		
+
 		/*
 		 * However, if there *is* a NamedEntity in the covering NP, add it as a
 		 * subject too - NamedEntity subject clues can be treated as reliable.
@@ -134,13 +138,15 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 		 * useful as e.g. a property selector.
 		 */
 		NP npShort = TreeUtil.shortestCoveringAlpinoNP(stok);
-		if (npShort != np && !npShort.getCoveredText().equals(genSubject)) {
+		if (npShort != null && npShort != np && !npShort.getCoveredText().equals(genSubject)) {
 			/*
 			 * XXX: Blacklisting "name" in "the name of XYZ". We probably don't
 			 * need a sophisticated name proxy like for LATs.
 			 */
-			if (!SyntaxCanonization.getCanonText(npShort.getCoveredText().toLowerCase()).equals("name"))
+			if (!SyntaxCanonization.getCanonText(npShort.getCoveredText().toLowerCase()).equals(
+					"name")) {
 				addSubject(jcas, npShort);
+			}
 		}
 	}
 

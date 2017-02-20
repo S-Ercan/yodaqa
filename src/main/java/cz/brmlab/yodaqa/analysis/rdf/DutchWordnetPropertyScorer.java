@@ -28,12 +28,12 @@ public class DutchWordnetPropertyScorer {
 
 	private static DutchWordnetPropertyScorer propScorer;
 	private static WordnetData wordnetData;
+	private static final double maxScore = 4.0;
 
 	final Logger logger = LoggerFactory.getLogger(DutchWordnetPropertyScorer.class);
 
 	List<String> baseTexts;
 	Map<String, Double> synonyms;
-	// WordnetData wordnetData;
 
 	public synchronized static DutchWordnetPropertyScorer getDutchWordnetPropertyScorer() {
 		if (propScorer == null) {
@@ -70,6 +70,9 @@ public class DutchWordnetPropertyScorer {
 		double maxSimilarityScore = 0.0;
 		double similarityScore;
 		for (String baseText : baseTexts) {
+			if (baseText.toLowerCase().equals(prop.toLowerCase())) {
+				return maxScore;
+			}
 			similarityScore = WordSim.getWordSimLC(wordnetData, prop, baseText);
 			if (similarityScore > maxSimilarityScore) {
 				maxSimilarityScore = similarityScore;
@@ -82,7 +85,7 @@ public class DutchWordnetPropertyScorer {
 		baseTexts = new ArrayList<>();
 		synonyms = new HashMap<>();
 		for (Token token : JCasUtil.select(questionView, Token.class)) {
-			loadSynonyms(token.getCoveredText());
+			loadSynonyms(token.getLemma().getCoveredText());
 		}
 
 		String prop = pv.getProperty().toLowerCase();

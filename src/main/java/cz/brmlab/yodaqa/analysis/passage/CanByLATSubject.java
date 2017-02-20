@@ -110,18 +110,21 @@ public class CanByLATSubject extends CandidateGenerator {
 					String pos = ((Token) governor).getPos().getPosValue();
 					if (questionLat != null && pos.matches("^v.*") || pos.matches("^V.*")) {
 						String text = questionLat.getText();
-						if (text.equals("location")) {
-							for (LD depObj : JCasUtil.selectCovered(LD.class, passage)) {
-								base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
-							}
-						} else if (text.equals("amount")) {
-							for (ME depObj : JCasUtil.selectCovered(ME.class, passage)) {
-								base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
-							}
-						} else if (text.equals("person")) {
-							for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-								base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
-							}
+						switch (text) {
+							case "location":
+								for (LD depObj : JCasUtil.selectCovered(LD.class, passage)) {
+									base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+								}	break;
+							case "amount":
+								for (ME depObj : JCasUtil.selectCovered(ME.class, passage)) {
+									base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+								}	break;
+							case "person":
+								for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
+									base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+								}	break;
+							default:
+								break;
 						}
 					}
 					while (base == null) {
