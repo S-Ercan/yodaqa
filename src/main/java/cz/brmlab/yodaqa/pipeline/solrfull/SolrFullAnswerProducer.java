@@ -105,7 +105,7 @@ public class SolrFullAnswerProducer /* XXX: extends AggregateBuilder ? */ {
 				SolrFullPrimarySearch.class,
 				SolrFullPrimarySearch.PARAM_RESULT_INFO_ORIGIN,
 				"cz.brmlab.yodaqa.pipeline.solrfull.fulltext",
-				SolrFullPrimarySearch.PARAM_HITLIST_SIZE, 8);
+				SolrFullPrimarySearch.PARAM_HITLIST_SIZE, 6);
 		builder.add(primarySearch);
 		AnalysisEngineDescription passageExtractor = PassageExtractorAE.createEngineDescription(
 				PassageExtractorAE.PARAM_PASS_SEL_BYCLUE);
@@ -138,7 +138,7 @@ public class SolrFullAnswerProducer /* XXX: extends AggregateBuilder ? */ {
 				"cz.brmlab.yodaqa.pipeline.solrfull.titleInClue",
 				SolrFullPrimarySearch.PARAM_SEARCH_FULL_TEXT, false,
 				SolrFullPrimarySearch.PARAM_CLUES_ALL_REQUIRED, false,
-				SolrFullPrimarySearch.PARAM_HITLIST_SIZE, 25);
+				SolrFullPrimarySearch.PARAM_HITLIST_SIZE, 3);
 		builder.add(primarySearch);
 		AnalysisEngineDescription passageExtractor = PassageExtractorAE.createEngineDescription(
 				PassageExtractorAE.PARAM_PASS_SEL_FIRST);

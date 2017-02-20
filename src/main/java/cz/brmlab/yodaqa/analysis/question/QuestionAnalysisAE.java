@@ -47,6 +47,7 @@ public class QuestionAnalysisAE /* XXX: extends AggregateBuilder ? */ {
 		builder.add(AnalysisEngineFactory.createEngineDescription(SVGenerator.class));
 
 		/* Prepare LATs */
+		builder.add(AnalysisEngineFactory.createEngineDescription(LATByQuestionWord.class));
 		builder.add(AnalysisEngineFactory.createEngineDescription(LATByFocus.class));
 		builder.add(AnalysisEngineFactory.createEngineDescription(LATBySV.class));
 		/* Generalize imprecise LATs */

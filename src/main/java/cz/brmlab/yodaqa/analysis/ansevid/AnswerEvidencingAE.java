@@ -41,7 +41,7 @@ public class AnswerEvidencingAE /* XXX: extends AggregateBuilder ? */ {
 
 		/* Run a fulltext search for each answer + question clues and
 		 * measure the number of hits. */
-		builder.add(createPrimitiveDescription(SolrHitsCounter.class));
+//		builder.add(createPrimitiveDescription(SolrHitsCounter.class));
 
 
 		/* Some debug dumps of the intermediate CAS. */

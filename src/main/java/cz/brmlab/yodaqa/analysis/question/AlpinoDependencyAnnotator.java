@@ -109,9 +109,15 @@ public class AlpinoDependencyAnnotator {
 				if (governorString.equals("top/top")) {
 					continue;
 				}
-				String aDependencyType = matcher.group(2).split("/")[1];
-				if (aDependencyType.equals("--")) {
+
+				String[] aDependencyTypes = matcher.group(2).split("/");
+				String aDependencyType;
+				if (aDependencyTypes[1].equals("--")) {
 					continue;
+				} else if (aDependencyTypes[1].equals("body")) {
+					aDependencyType = aDependencyTypes[0];
+				} else {
+					aDependencyType = aDependencyTypes[1];
 				}
 				String dependentString = matcher.group(3);
 				String dependencyTypeName = dependencyPackage + "." + aDependencyType.toUpperCase();

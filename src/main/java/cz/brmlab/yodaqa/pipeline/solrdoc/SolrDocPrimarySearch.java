@@ -52,7 +52,8 @@ public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
 
 	/** Number of results to grab and analyze. */
 	public static final String PARAM_HITLIST_SIZE = "hitlist-size";
-	@ConfigurationParameter(name = PARAM_HITLIST_SIZE, mandatory = false, defaultValue = "20")
+//	@ConfigurationParameter(name = PARAM_HITLIST_SIZE, mandatory = false, defaultValue = "20")
+	@ConfigurationParameter(name = PARAM_HITLIST_SIZE, mandatory = false, defaultValue = "5")
 	protected int hitListSize;
 
 	/** Number and baseline distance of gradually desensitivized
@@ -184,7 +185,7 @@ public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
 		fv.setFeature(AF.OriginDocTitle, 1.0);
 
 		AnswerResource ar = new AnswerResource(jcas);
-		ar.setIri("http://en.wikipedia.org/wiki/" + title.replace(" ", "_"));
+		ar.setIri("http://nl.wikipedia.org/wiki/" + title.replace(" ", "_"));
 		ar.addToIndexes();
 		ArrayList<AnswerResource> ars = new ArrayList<>();
 		ars.add(ar);
