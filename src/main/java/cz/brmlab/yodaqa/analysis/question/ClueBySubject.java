@@ -1,5 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
+import cz.brmlab.yodaqa.analysis.TreeUtil;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -15,21 +16,23 @@ import cz.brmlab.yodaqa.model.Question.ClueSubjectNE;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectToken;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectPhrase;
 import cz.brmlab.yodaqa.model.Question.Subject;
+import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ1;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
 //import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 
 /**
- * Generate Clue annotations in a QuestionCAS. These represent key information
- * stored in the question that is then used in primary search.
+ * Generate Clue annotations in a QuestionCAS. These represent key information stored in the
+ * question that is then used in primary search.
  *
- * This generates clues from the question subject, i.e. NSUBJ annotation.
- * E.g. in "When did Einstein die?", subject is "Einstein" and will have such
- * a clue generated. */
-
+ * This generates clues from the question subject, i.e. NSUBJ annotation. E.g. in "When did Einstein
+ * die?", subject is "Einstein" and will have such a clue generated.
+ */
 public class ClueBySubject extends JCasAnnotator_ImplBase {
+
 	final Logger logger = LoggerFactory.getLogger(ClueBySubject.class);
 
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -43,17 +46,25 @@ public class ClueBySubject extends JCasAnnotator_ImplBase {
 			 * may have overly specific phrasing.  NamedEntity
 			 * subjects are treated as reliable indicators but
 			 * have lower height. */
-			if (s.getBase() instanceof NamedEntity)
+			if (s.getBase() instanceof NamedEntity) {
 				addClue(new ClueSubjectNE(jcas), s.getBegin(), s.getEnd(), s, true, 2.2);
-			else if (s.getBase() instanceof Token)
+			} else if (s.getBase() instanceof Token) {
 				addClue(new ClueSubjectToken(jcas), s.getBegin(), s.getEnd(), s, true, 2.5);
-			else if (s.getBase() instanceof NP)
+			} else if (s.getBase() instanceof NP) {
 				addClue(new ClueSubjectPhrase(jcas), s.getBegin(), s.getEnd(), s, false, 2.7);
-			else assert(false);
+				for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, s)) {
+					Annotation objectBase = depObj.getDependent();
+					addClue(new ClueSubjectPhrase(jcas), objectBase.getBegin(), objectBase.getEnd(),
+							objectBase, false, 2.7);
+				}
+			} else {
+				assert (false);
+			}
 		}
 	}
 
-	protected void addClue(Clue clue, int begin, int end, Subject base, boolean isReliable, double weight) {
+	protected void addClue(Clue clue, int begin, int end, Annotation base, boolean isReliable,
+			double weight) {
 		clue.setBegin(begin);
 		clue.setEnd(end);
 		clue.setBase(base);
@@ -61,6 +72,6 @@ public class ClueBySubject extends JCasAnnotator_ImplBase {
 		clue.setLabel(clue.getCoveredText());
 		clue.setIsReliable(isReliable);
 		clue.addToIndexes();
-		logger.debug("new by {} {}: {}", base.getType().getShortName(), base.getBase().getType().getShortName(), clue.getLabel());
+//		logger.debug("new by {} {}: {}", base.getType().getShortName(), base.getBase().getType().getShortName(), clue.getLabel());
 	}
 }

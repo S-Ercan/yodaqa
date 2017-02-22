@@ -1,5 +1,8 @@
 package cz.brmlab.yodaqa.analysis;
 
+import cz.brmlab.yodaqa.model.alpino.type.constituent.MWU;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.PP;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -8,7 +11,6 @@ import org.apache.uima.jcas.JCas;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import org.apache.uima.jcas.tcas.Annotation;
 
@@ -39,17 +41,33 @@ public class TreeUtil {
 		return list;
 	}
 
-	public static Annotation narrowestCoveringSubphrase(Token token) {
-		Annotation narrowestAnnotation = null;
+	public static Annotation widestCoveringSubphrase(Token token) {
+		Annotation widestSubphrase = null;
 
-		for (Annotation currentAnnotation : JCasUtil.selectCovering(Constituent.class, token)) {
-			if (narrowestAnnotation == null || narrowestAnnotation.getBegin() < currentAnnotation.
-					getBegin() || narrowestAnnotation.getEnd() > currentAnnotation.getEnd()) {
-				narrowestAnnotation = currentAnnotation;
+		for (NP currentAnnotation : JCasUtil.selectCovering(NP.class, token)) {
+			if (widestSubphrase == null || widestSubphrase.getBegin() > currentAnnotation.
+					getBegin() || widestSubphrase.getEnd() < currentAnnotation.getEnd()) {
+				widestSubphrase = currentAnnotation;
+			}
+		}
+		if (widestSubphrase == null) {
+			for (PP currentAnnotation : JCasUtil.selectCovering(PP.class, token)) {
+				if (widestSubphrase == null || widestSubphrase.getBegin() > currentAnnotation.
+						getBegin() || widestSubphrase.getEnd() < currentAnnotation.getEnd()) {
+					widestSubphrase = currentAnnotation;
+				}
+			}
+		}
+		if (widestSubphrase == null) {
+			for (MWU currentAnnotation : JCasUtil.selectCovering(MWU.class, token)) {
+				if (widestSubphrase == null || widestSubphrase.getBegin() > currentAnnotation.
+						getBegin() || widestSubphrase.getEnd() < currentAnnotation.getEnd()) {
+					widestSubphrase = currentAnnotation;
+				}
 			}
 		}
 
-		return narrowestAnnotation;
+		return widestSubphrase;
 	}
 
 	public static cz.brmlab.yodaqa.model.alpino.type.constituent.NP widestCoveringAlpinoNP(Token t) {

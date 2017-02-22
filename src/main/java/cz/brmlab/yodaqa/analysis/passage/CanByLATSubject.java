@@ -110,18 +110,19 @@ public class CanByLATSubject extends CandidateGenerator {
 					String pos = ((Token) governor).getPos().getPosValue();
 					if (questionLat != null && pos.matches("^v.*") || pos.matches("^V.*")) {
 						String text = questionLat.getText();
+						// TODO: replace narrowestCoveringSubphrase with widestCoveringNPOrPPOrMWU.
 						switch (text) {
 							case "location":
 								for (LD depObj : JCasUtil.selectCovered(LD.class, passage)) {
-									base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+									base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
 								}	break;
 							case "amount":
 								for (ME depObj : JCasUtil.selectCovered(ME.class, passage)) {
-									base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+									base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
 								}	break;
 							case "person":
 								for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-									base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+									base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
 								}	break;
 							default:
 								break;
@@ -129,25 +130,32 @@ public class CanByLATSubject extends CandidateGenerator {
 					}
 					while (base == null) {
 						for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-							base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
-						}
-						for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
-							base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
-						}
-						for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, passage)) {
-							base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
-						}
-						for (OBJ2 depObj : JCasUtil.selectCovered(OBJ2.class, passage)) {
-							base = TreeUtil.narrowestCoveringSubphrase(depObj.getDependent());
+							base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
 						}
 						if (base == null) {
-							break;
+							for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
+								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+							}
+						}
+						if (base == null) {
+							for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, passage)) {
+								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+							}
+						}
+						if (base == null) {
+							for (OBJ2 depObj : JCasUtil.selectCovered(OBJ2.class, passage)) {
+								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+							}
 						}
 					}
 					if (base == null) {
 //						logger.debug("Ignoring verb governor {} {}", pos, base.getCoveredText());
 						continue;
 					}
+				}
+				if (base == null) {
+//						logger.debug("Ignoring verb governor {} {}", pos, base.getCoveredText());
+					continue;
 				}
 
 				AnswerFV fv = new AnswerFV(ri.getAnsfeatures());

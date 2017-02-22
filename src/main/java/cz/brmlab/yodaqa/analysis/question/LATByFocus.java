@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.analysis.TreeUtil;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 import cz.brmlab.yodaqa.model.Question.Focus;
 import cz.brmlab.yodaqa.model.TyCor.ImplicitQLAT;
 import cz.brmlab.yodaqa.model.TyCor.LAT;
@@ -20,7 +21,6 @@ import cz.brmlab.yodaqa.provider.OpenNlpNamedEntities;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.NN;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 
 /**
  * Generate LAT annotations in a QuestionCAS. These are words that should
