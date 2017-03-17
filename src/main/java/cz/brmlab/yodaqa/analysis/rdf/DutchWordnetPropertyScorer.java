@@ -1,5 +1,6 @@
 package cz.brmlab.yodaqa.analysis.rdf;
 
+import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.provider.rdf.PropertyValue;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import vu.wntools.wnsimilarity.main.WordSim;
@@ -88,8 +89,20 @@ public class DutchWordnetPropertyScorer {
 			loadSynonyms(token.getLemma().getCoveredText());
 		}
 
-		String prop = pv.getProperty().toLowerCase();
-		prop = prop.replaceAll("[0-9]*$", "");
+		String prop = null;
+		try {
+			SV1 sv1 = JCasUtil.selectSingle(questionView, SV1.class);
+			// TODO: also for cases other than capabilities
+			if (pv.getProperty().equals("vaardigheid")) {
+				prop = pv.getValue();
+			}
+		} catch (IllegalArgumentException ex) {
+		}
+
+		if (prop == null) {
+			prop = pv.getProperty();
+		}
+		prop = prop.toLowerCase().replaceAll("[0-9]*$", "");
 
 		if (!prop.contains(" ")) {
 			return getPropTextScore(prop);

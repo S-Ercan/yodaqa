@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.model.TyCor.LAT;
 import cz.brmlab.yodaqa.model.TyCor.QuestionWordLAT;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.WHD;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.NN;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
@@ -36,6 +37,14 @@ public class LATByQuestionWord extends JCasAnnotator_ImplBase {
 		for (WHD whd : JCasUtil.select(jcas, WHD.class)) {
 			addWHDLAT(jcas, whd);
 		}
+		for (SV1 sv1 : JCasUtil.select(jcas, SV1.class)) {
+			addSV1LAT(jcas, sv1);
+		}
+	}
+
+	protected void addSV1LAT(JCas jcas, SV1 sv1) {
+		addLAT(new QuestionWordLAT(jcas), sv1.getBegin(), sv1.getEnd(), sv1, "confirmation", null, 1,
+				0.0);
 	}
 
 	protected void addWHDLAT(JCas jcas, WHD whd) {
@@ -55,6 +64,9 @@ public class LATByQuestionWord extends JCasAnnotator_ImplBase {
 		} else if (text.equals("hoeveel")) {
 			/* (15){00033914} <noun.Tops>[03] S: (n) measure#2 (measure%1:03:00::), quantity#1 (quantity%1:03:00::), amount#3 (amount%1:03:00::) (how much there is or how many there are of something that you can quantify) */
 			addWHDLAT(jcas, whd, "amount", null, 33914, 0.0, new QuestionWordLAT(jcas));
+		} else if (text.equals("waarvoor")) {
+			// TODO: synset shouldn't be 1, but what should it be?
+			addWHDLAT(jcas, whd, "purpose", null, 1, 0.0, new QuestionWordLAT(jcas));
 		}
 	}
 

@@ -18,6 +18,7 @@ import cz.brmlab.yodaqa.model.SearchResult.ResultInfo;
 import cz.brmlab.yodaqa.model.TyCor.LAT;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.LD;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.ME;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.MOD;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ1;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ2;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.PC;
@@ -26,6 +27,7 @@ import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.WHD;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import org.apache.uima.jcas.cas.TOP;
 
 /**
  * Create CandidateAnswer for the largest NP covering governor of NSUBJ where the dependent is the
@@ -108,50 +110,90 @@ public class CanByLATSubject extends CandidateGenerator {
 				}
 				if (governor instanceof Token) {
 					String pos = ((Token) governor).getPos().getPosValue();
-					if (questionLat != null && pos.matches("^v.*") || pos.matches("^V.*")) {
+					if (questionLat != null && (pos.matches("^v.*") || pos.matches("^V.*"))) {
 						String text = questionLat.getText();
-						// TODO: replace narrowestCoveringSubphrase with widestCoveringNPOrPPOrMWU.
+						// TODO: also handle the reverse case (i.e., for depObj.getGovernor())
 						switch (text) {
 							case "location":
 								for (LD depObj : JCasUtil.selectCovered(LD.class, passage)) {
-									base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-								}	break;
+									// TODO: for this and all subsequent similar checks, requiring
+									// a high WordNet score instead of an exact match is a better
+									// approach
+									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+										base = TreeUtil.widestCoveringSubphrase(depObj.
+												getDependent());
+									}
+								}
+								break;
 							case "amount":
 								for (ME depObj : JCasUtil.selectCovered(ME.class, passage)) {
-									base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-								}	break;
+									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+										base = TreeUtil.widestCoveringSubphrase(depObj.
+												getDependent());
+									}
+								}
+								break;
 							case "person":
 								for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-									base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-								}	break;
+									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+										base = TreeUtil.widestCoveringSubphrase(depObj.
+												getDependent());
+									}
+								}
+								break;
+							case "purpose":
+								for (MOD depObj : JCasUtil.selectCovered(MOD.class, passage)) {
+									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+										base = TreeUtil.widestCoveringSubphrase(depObj.
+												getDependent());
+									}
+								}
+								for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
+									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+										base = TreeUtil.widestCoveringSubphrase(depObj.
+												getDependent());
+									}
+								}
+								break;
 							default:
 								break;
 						}
 					}
-					while (base == null) {
+					for (TOP anno : JCasUtil.selectAll(passagesView)) {
+						String annoText = anno.toString();
+//						System.out.println(annoText);
+					}
+					if (base == null) {
 						for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-							base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-						}
-						if (base == null) {
-							for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
-								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-							}
-						}
-						if (base == null) {
-							for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, passage)) {
-								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-							}
-						}
-						if (base == null) {
-							for (OBJ2 depObj : JCasUtil.selectCovered(OBJ2.class, passage)) {
+							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
 								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
 							}
 						}
 					}
 					if (base == null) {
-//						logger.debug("Ignoring verb governor {} {}", pos, base.getCoveredText());
-						continue;
+						for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
+							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+							}
+						}
 					}
+					if (base == null) {
+						for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, passage)) {
+							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+							}
+						}
+					}
+					if (base == null) {
+						for (OBJ2 depObj : JCasUtil.selectCovered(OBJ2.class, passage)) {
+							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
+								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+							}
+						}
+					}
+//					if (base == null) {
+//						continue;
+//					}
 				}
 				if (base == null) {
 //						logger.debug("Ignoring verb governor {} {}", pos, base.getCoveredText());
