@@ -17,12 +17,11 @@ import cz.brmlab.yodaqa.model.CandidateAnswer.AnswerResource;
 import cz.brmlab.yodaqa.model.Question.QuestionInfo;
 
 /**
- * A trivial consumer that will extract the final answer and print it
- * on the standard output for the user to "officially" see.
+ * A trivial consumer that will extract the final answer and print it on the standard output for the
+ * user to "officially" see.
  *
  * Pair this with InteractiveQuestionReader.
  */
-
 public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 
 	public void initialize(UimaContext context)
@@ -44,16 +43,24 @@ public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 		if (answers.hasNext()) {
 			//int counter = 0;
 			int i = 1;
-			while (answers.hasNext()) {
+			if (QuestionDashboard.getInstance().getIsConfirmationQuestion()) {
 				Answer answer = (Answer) answers.next();
-				StringBuilder sb = new StringBuilder();
-				sb.append(i++);
-				sb.append(". ");
-				sb.append(answer.getText());
-				sb.append(" (conf. ");
-				sb.append(answer.getConfidence());
-				sb.append(")");
-				/* PRINT the passages assigned to this answer
+				if (answer.getConfidence() > 0.8) {
+					System.out.println("Ja");
+				} else {
+					System.out.println("Nee");
+				}
+			} else {
+				while (answers.hasNext()) {
+					Answer answer = (Answer) answers.next();
+					StringBuilder sb = new StringBuilder();
+					sb.append(i++);
+					sb.append(". ");
+					sb.append(answer.getText());
+					sb.append(" (conf. ");
+					sb.append(answer.getConfidence());
+					sb.append(")");
+					/* PRINT the passages assigned to this answer
 				sb.append("\n");
 				for(int ID: answer.getPassageIDs().toArray()){
 					sb.append("		");
@@ -67,14 +74,15 @@ public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 
 				}
 				counter = 0;
-				*/
-				if (answer.getResources() != null) {
-					for (FeatureStructure resfs : answer.getResources().toArray()) {
-						sb.append(" ");
-						sb.append(((AnswerResource) resfs).getIri());
+					 */
+					if (answer.getResources() != null) {
+						for (FeatureStructure resfs : answer.getResources().toArray()) {
+							sb.append(" ");
+							sb.append(((AnswerResource) resfs).getIri());
+						}
 					}
+					System.out.println(sb.toString());
 				}
-				System.out.println(sb.toString());
 			}
 		} else {
 			System.out.println("No answer found.");

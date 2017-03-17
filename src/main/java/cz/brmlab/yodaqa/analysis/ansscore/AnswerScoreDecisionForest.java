@@ -2,6 +2,7 @@ package cz.brmlab.yodaqa.analysis.ansscore;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -123,6 +124,9 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 	}
 
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
+		if (QuestionDashboard.getInstance().getIsConfirmationQuestion()) {
+			return;
+		}
 		logger.debug("scoring with model {}", modelName);
 
 		AnswerStats astats = new AnswerStats(jcas);

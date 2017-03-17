@@ -29,9 +29,6 @@ import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.uima.cas.FeatureStructure;
-import org.apache.uima.cas.impl.FeatureStructureImpl;
-import org.apache.uima.cas.impl.FeatureStructureImplC;
 
 /**
  * Generate Passages from Sentences that contain some Clue in Question and copy

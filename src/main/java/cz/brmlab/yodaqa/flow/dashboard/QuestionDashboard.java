@@ -26,6 +26,16 @@ public final class QuestionDashboard {
 	public static QuestionDashboard getInstance() {
 		return qd;
 	}
+	
+	private boolean isConfirmationQuestion;
+
+	public boolean getIsConfirmationQuestion() {
+		return isConfirmationQuestion;
+	}
+
+	public void setIsConfirmationQuestion(boolean isConfirmationQuestion) {
+		this.isConfirmationQuestion = isConfirmationQuestion;
+	}
 
 	/* All asked questions, by their id. */
 	private Map<String, Question> questions = new HashMap<>();
@@ -74,6 +84,7 @@ public final class QuestionDashboard {
 	}
 
 	public synchronized void finishQuestion(Question q) {
+		setIsConfirmationQuestion(false);
 		q.setFinished(true);
 		questionsInProgress.remove(q);
 		if (questionsAnswered.size() >= maxQuestionsAnswered)

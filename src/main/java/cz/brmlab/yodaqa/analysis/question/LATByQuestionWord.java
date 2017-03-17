@@ -1,5 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
+import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -34,17 +35,24 @@ public class LATByQuestionWord extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
+		boolean isWHQuestion = false;
 		for (WHD whd : JCasUtil.select(jcas, WHD.class)) {
 			addWHDLAT(jcas, whd);
+			isWHQuestion = true;
 		}
-		for (SV1 sv1 : JCasUtil.select(jcas, SV1.class)) {
-			addSV1LAT(jcas, sv1);
+		if (!isWHQuestion) {
+			for (SV1 sv1 : JCasUtil.select(jcas, SV1.class)) {
+				addSV1LAT(jcas, sv1);
+			}
 		}
 	}
 
 	protected void addSV1LAT(JCas jcas, SV1 sv1) {
-		addLAT(new QuestionWordLAT(jcas), sv1.getBegin(), sv1.getEnd(), sv1, "confirmation", null, 1,
-				0.0);
+//		if (sv1.getBegin() == 0) {
+			QuestionDashboard.getInstance().setIsConfirmationQuestion(true);
+			addLAT(new QuestionWordLAT(jcas), sv1.getBegin(), sv1.getEnd(), sv1, "confirmation",
+					null, 1, 0.0);
+//		}
 	}
 
 	protected void addWHDLAT(JCas jcas, WHD whd) {
