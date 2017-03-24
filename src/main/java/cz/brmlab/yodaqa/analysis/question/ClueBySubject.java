@@ -1,6 +1,5 @@
 package cz.brmlab.yodaqa.analysis.question;
 
-import cz.brmlab.yodaqa.analysis.TreeUtil;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -16,13 +15,10 @@ import cz.brmlab.yodaqa.model.Question.ClueSubjectNE;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectToken;
 import cz.brmlab.yodaqa.model.Question.ClueSubjectPhrase;
 import cz.brmlab.yodaqa.model.Question.Subject;
-import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ1;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
-//import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.NP;
 
 /**
  * Generate Clue annotations in a QuestionCAS. These represent key information stored in the
@@ -35,10 +31,12 @@ public class ClueBySubject extends JCasAnnotator_ImplBase {
 
 	final Logger logger = LoggerFactory.getLogger(ClueBySubject.class);
 
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		for (Subject s : JCasUtil.select(jcas, Subject.class)) {
 			/* Single-token subjects are treated as reliable

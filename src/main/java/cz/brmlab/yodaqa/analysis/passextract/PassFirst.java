@@ -1,7 +1,5 @@
 package cz.brmlab.yodaqa.analysis.passextract;
 
-import java.lang.Math;
-
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 
 import org.apache.uima.UimaContext;
@@ -35,10 +33,12 @@ import cz.brmlab.yodaqa.model.SearchResult.Passage;
 public class PassFirst extends JCasAnnotator_ImplBase {
 	final Logger logger = LoggerFactory.getLogger(PassFirst.class);
 
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		JCas questionView, resultView, passagesView;
 		try {

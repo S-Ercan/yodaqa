@@ -11,7 +11,6 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -27,34 +26,37 @@ import org.slf4j.LoggerFactory;
  * Created by honza on 5.7.15.
  */
 public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
+
 	private class Tree {
+
 		public List<Integer> children_right;
 		public List<Integer> children_left;
 		public List<Integer> features;
 		public List<Double> thresholds;
 		public List<Double> values;
+
 		public Tree() {
-			children_right = new ArrayList<Integer>();
-			children_left = new ArrayList<Integer>();
-			features = new ArrayList<Integer>();
-			thresholds = new ArrayList<Double>();
-			values = new ArrayList<Double>();
+			children_right = new ArrayList<>();
+			children_left = new ArrayList<>();
+			features = new ArrayList<>();
+			thresholds = new ArrayList<>();
+			values = new ArrayList<>();
 		}
 	}
 
 	private class Model {
+
 		public double prior;
 		public double learning_rate;
 		public List<Tree> forest;
 		public List<String> labels;
 	}
 
-
 	final Logger logger = LoggerFactory.getLogger(AnswerScoreDecisionForest.class);
 
 	/**
-	 * Pipeline phase in which we are scoring.  We may be scoring
-	 * multiple times and will use different models.
+	 * Pipeline phase in which we are scoring. We may be scoring multiple times and will use
+	 * different models.
 	 */
 	public static final String PARAM_SCORING_PHASE = "SCORING_PHASE";
 	@ConfigurationParameter(name = PARAM_SCORING_PHASE, mandatory = true)
@@ -66,10 +68,11 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 
 	private HashMap<String, Integer> labelMap;
 
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 
-        modelName = "AnswerScoreDecisionForest" + scoringPhase + ".model";
+		modelName = "AnswerScoreDecisionForest" + scoringPhase + ".model";
 
 		/* Load and parse the model. */
 		try {
@@ -82,7 +85,7 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 
 	protected void loadModel(InputStream model_stream) throws Exception {
 		Gson gson = new Gson();
-		labelMap = new HashMap<String, Integer>();
+		labelMap = new HashMap<>();
 		JsonReader br = new JsonReader(new InputStreamReader(model_stream));
 		br.setLenient(true);
 		model = gson.fromJson(br, Model.class);
@@ -92,6 +95,7 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 	}
 
 	protected class AnswerScore {
+
 		public Answer a;
 		public double score;
 
@@ -103,26 +107,38 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 
 	private double classifyWithOneTree(double[] fvec, Tree tree, int node) {
 		int fidx = tree.features.get(node);
-		if (fidx < 0) return tree.values.get(node);
+		if (fidx < 0) {
+			return tree.values.get(node);
+		}
 		double threshold = tree.thresholds.get(node);
-		if (fvec[fidx] <= threshold) return classifyWithOneTree(fvec, tree, tree.children_left.get(node));
-		else return classifyWithOneTree(fvec, tree, tree.children_right.get(node));
+		if (fvec[fidx] <= threshold) {
+			return classifyWithOneTree(fvec, tree, tree.children_left.get(node));
+		} else {
+			return classifyWithOneTree(fvec, tree, tree.children_right.get(node));
+		}
 	}
 
 	private double[] reorderByLabels(double[] fvec) {
-		double res[] = new double [model.labels.size()];
+		double res[] = new double[model.labels.size()];
 		for (int i = 0; i < fvec.length; i++) {
 			char c;
-			if (i % 3 == 0) c = '@';
-			else if (i % 3 == 1) c = '%';
-			else c = '!';
-			Integer idx = labelMap.get(c + AnswerFV.labels[i/3]);
-			if (idx == null) continue;
+			if (i % 3 == 0) {
+				c = '@';
+			} else if (i % 3 == 1) {
+				c = '%';
+			} else {
+				c = '!';
+			}
+			Integer idx = labelMap.get(c + AnswerFV.labels[i / 3]);
+			if (idx == null) {
+				continue;
+			}
 			res[idx] = fvec[i];
 		}
 		return res;
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		if (QuestionDashboard.getInstance().getIsConfirmationQuestion()) {
 			return;
@@ -130,7 +146,7 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 		logger.debug("scoring with model {}", modelName);
 
 		AnswerStats astats = new AnswerStats(jcas);
-		List<AnswerScore> answers = new LinkedList<AnswerScore>();
+		List<AnswerScore> answers = new LinkedList<>();
 
 		for (Answer a : JCasUtil.select(jcas, Answer.class)) {
 			AnswerFV fv = new AnswerFV(a, astats);
@@ -138,10 +154,10 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 			double fvec[] = reorderByLabels(fv.getFV());
 
 			double res = model.prior;
-			for(Tree t: model.forest) {
-				res += model.learning_rate*classifyWithOneTree(fvec, t, 0);
+			for (Tree t : model.forest) {
+				res += model.learning_rate * classifyWithOneTree(fvec, t, 0);
 			}
-			res = 1.0/(1.0 + Math.exp(-res));
+			res = 1.0 / (1.0 + Math.exp(-res));
 			answers.add(new AnswerScore(a, res));
 		}
 

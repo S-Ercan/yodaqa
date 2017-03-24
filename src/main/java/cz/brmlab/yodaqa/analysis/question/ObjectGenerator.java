@@ -15,7 +15,12 @@ import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.Subject;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.NP;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.REL;
+import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ1;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ2;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.PREDC;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
+import cz.brmlab.yodaqa.model.alpino.type.dependency.VC;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
@@ -32,7 +37,7 @@ import java.util.List;
  * This generates clues from the question subject, i.e. NSUBJ annotation. E.g. in "When did Einstein
  * die?", subject is "Einstein" and will have such a clue generated.
  */
-public class SubjectGenerator extends JCasAnnotator_ImplBase {
+public class ObjectGenerator extends JCasAnnotator_ImplBase {
 
 	final Logger logger = LoggerFactory.getLogger(SubjectGenerator.class);
 
@@ -41,6 +46,11 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 	}
 
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
+		try {
+			JCasUtil.selectSingle(jcas, SV1.class);
+		} catch (IllegalArgumentException ex) {
+			return;
+		}
 		for (ROOT sentence : JCasUtil.select(jcas, ROOT.class)) {
 			processSentence(jcas, sentence);
 		}
@@ -49,11 +59,25 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 	protected void processSentence(JCas jcas, Constituent sentence) throws
 			AnalysisEngineProcessException {
 		for (SU subj : JCasUtil.select(jcas, SU.class)) {
-			processSubj(jcas, subj);
+			processSubj(jcas, sentence, subj);
 		}
 	}
 
-	protected void processSubj(JCas jcas, Dependency subj) throws AnalysisEngineProcessException {
+	protected void processSubj(JCas jcas, Constituent sentence, Dependency subj) throws
+			AnalysisEngineProcessException {
+		for (PREDC predc : JCasUtil.select(jcas, PREDC.class)) {
+			String dependentText = predc.getDependent().getCoveredText();
+		}
+		for (OBJ1 obj1 : JCasUtil.select(jcas, OBJ1.class)) {
+			String dependentText = obj1.getDependent().getCoveredText();
+		}
+		for (OBJ2 obj2 : JCasUtil.select(jcas, OBJ2.class)) {
+			String dependentText = obj2.getDependent().getCoveredText();
+		}
+		for (VC vc : JCasUtil.select(jcas, VC.class)) {
+			String dependentText = vc.getDependent().getCoveredText();
+		}
+
 		Token stok = subj.getDependent();
 		Annotation parent = stok.getParent();
 		Constituent cparent = null;

@@ -70,6 +70,7 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 
 	final ConceptClassifier classifier = new ConceptClassifier();
 
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
@@ -81,6 +82,7 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 	 * (without gold standard), and a precise methodology. */
 	protected static String labelBlacklist = "name|script|music|director|film|movie|voice";
 
+	@Override
 	public void process(JCas resultView) throws AnalysisEngineProcessException {
 		QuestionInfo qi = JCasUtil.selectSingle(resultView, QuestionInfo.class);
 		List<Clue> clues;
@@ -103,7 +105,7 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 			 * a corresponding enwiki article.  This internally
 			 * involves also some fuzzy lookups and such. */
 			List<DBpediaTitles.Article> results = dbp.query(clueLabel, logger);
-			if (results.size() == 0)
+			if (results.isEmpty())
 				continue; // no linkage
 
 			LinkedClue lc = new LinkedClue(clue, results);
@@ -127,7 +129,7 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 					if (result.isByFuzzyLookup() && result.getDist() == 0)
 						results.add(result);
 
-				if (results.size() == 0) {
+				if (results.isEmpty()) {
 					logger.debug("{}-gram clue <<{}>> - no match", n, clue.getLabel());
 					continue; // no linkage
 				} else {
@@ -246,7 +248,9 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 		addCluesForLabels(resultView, labelList);
 	}
 
-	/** Get a set of clues to check for concept links. */
+	/** Get a set of clues to check for concept links.
+	 * @param resultView
+	 * @return  */
 	protected List<Clue> cluesToCheck(JCas resultView) {
 		List<Clue> clues = new ArrayList<>();
 		for (Clue clue : JCasUtil.select(resultView, CluePhrase.class))
@@ -270,12 +274,15 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 	}
 
 	/** Produce a pretty label from sometimes-unwieldy enwiki article
-	 * name. */
+	 * name.
+	 * @param clueLabel
+	 * @param canonLabel
+	 * @return  */
 	protected String cookLabel(String clueLabel, String canonLabel) {
-		String cookedLabel = new String(canonLabel);
+		String cookedLabel = canonLabel;
 		if (cookedLabel.toLowerCase().matches("^list of .*")) {
 			logger.debug("ignoring label <<{}>> for <<{}>>", cookedLabel, clueLabel);
-			cookedLabel = new String(clueLabel);
+			cookedLabel = clueLabel;
 		}
 
 		/* Remove trailing (...) (e.g. (disambiguation)). */
@@ -288,7 +295,10 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 		return cookedLabel;
 	}
 
-	/** Generate n-gram clues from the token sequence in questionView. */
+	/** Generate n-gram clues from the token sequence in questionView.
+	 * @param questionView
+	 * @param n
+	 * @return  */
 	protected List<ClueNgram> generateNgramClues(JCas questionView, int n) {
 		List<Token> nTokens = new LinkedList<>();
 		List<ClueNgram> ngrams = new ArrayList<>();
@@ -323,7 +333,11 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 	 * However, the method returns true if it's the passed @clue
 	 * that has been subdued - in case it has high edit distance
 	 * relative to the covered clues, i.e. typically a false positive
-	 * (relying solely on that clue is typically disastrous). */
+	 * (relying solely on that clue is typically disastrous).
+	 * @param lc
+	 * @param linkedClues
+	 * @param cluesByLen
+	 * @return  */
 	protected boolean subdueCoveredClues(LinkedClue lc,
 			HashMap<Clue, LinkedClue> linkedClues,
 			PriorityQueue<LinkedClue> cluesByLen) {
@@ -359,7 +373,10 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 		return false;
 	}
 
-	/** Remove the entity link records of a given clue. */
+	/** Remove the entity link records of a given clue.
+	 * @param linkedClues
+	 * @param clueQueue
+	 * @param clue */
 	protected void removeLinkedClue(Map<Clue, LinkedClue> linkedClues, PriorityQueue<LinkedClue> clueQueue, Clue clue) {
 		List<LinkedClue> toRemove = new ArrayList<>();
 		for (LinkedClue c : clueQueue)
@@ -375,7 +392,9 @@ public class CluesToConcepts extends JCasAnnotator_ImplBase {
 	}
 
 	/** Add clue(s) and register concepts for each label
-	 * in the given list. */
+	 * in the given list.
+	 * @param resultView
+	 * @param labelList */
 	protected void addCluesForLabels(JCas resultView, List<ClueLabel> labelList) {
 		boolean originalClueNEd = false; // guard for single ClueNE generation
 		int rank = 1;

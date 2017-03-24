@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-import cz.brmlab.yodaqa.flow.dashboard.SourceIDGenerator;
-
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -31,7 +29,6 @@ import cz.brmlab.yodaqa.flow.dashboard.AnswerSourceEnwiki;
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import cz.brmlab.yodaqa.analysis.ansscore.AF;
 import cz.brmlab.yodaqa.model.Question.Clue;
-import cz.brmlab.yodaqa.model.Question.ClueConcept;
 import cz.brmlab.yodaqa.model.Question.Concept;
 import cz.brmlab.yodaqa.model.SearchResult.ResultInfo;
 import cz.brmlab.yodaqa.provider.solr.Solr;
@@ -149,7 +146,7 @@ public class SolrFullPrimarySearch extends JCasMultiplier_ImplBase {
 
 		/* Make sure we aren't processing any document twice in our
 		 * sequence of searches below. */
-		Collection<Integer> visitedIDs = new TreeSet<Integer>();
+		Collection<Integer> visitedIDs = new TreeSet<>();
 
 		results = new ArrayList<>();
 		i = 0;

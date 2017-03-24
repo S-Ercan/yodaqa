@@ -91,7 +91,7 @@ public class DutchWordnetPropertyScorer {
 
 		String prop = null;
 		try {
-			SV1 sv1 = JCasUtil.selectSingle(questionView, SV1.class);
+			JCasUtil.selectSingle(questionView, SV1.class);
 			// TODO: also for cases other than capabilities
 			if (pv.getProperty().equals("vaardigheid")) {
 				prop = pv.getValue();

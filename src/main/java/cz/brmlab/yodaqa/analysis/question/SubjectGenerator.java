@@ -36,10 +36,12 @@ public class SubjectGenerator extends JCasAnnotator_ImplBase {
 
 	final Logger logger = LoggerFactory.getLogger(SubjectGenerator.class);
 
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		for (ROOT sentence : JCasUtil.select(jcas, ROOT.class)) {
 			processSentence(jcas, sentence);

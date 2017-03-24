@@ -98,7 +98,7 @@ public abstract class StructuredPrimarySearch extends JCasMultiplier_ImplBase {
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		questionView = jcas;
 
-		List<PropertyValue> properties = new ArrayList<PropertyValue>();
+		List<PropertyValue> properties = new ArrayList<>();
 		for (Concept concept : JCasUtil.select(questionView, Concept.class)) {
 			List<PropertyValue> conceptProperties = getConceptProperties(questionView, concept);
 			for (PropertyValue pv : conceptProperties) {

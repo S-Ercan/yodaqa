@@ -55,10 +55,12 @@ public class CanByLATSubject extends CandidateGenerator {
 		logger = LoggerFactory.getLogger(CanByLATSubject.class);
 	}
 
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		JCas questionView, resultView, passagesView;
 		try {
