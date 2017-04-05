@@ -11,13 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.model.Question.Focus;
-import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.DET;
-import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ1;
-import cz.brmlab.yodaqa.model.alpino.type.dependency.OBJ2;
-import cz.brmlab.yodaqa.model.alpino.type.dependency.PREDC;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.SU;
-import cz.brmlab.yodaqa.model.alpino.type.dependency.VC;
 import cz.brmlab.yodaqa.model.alpino.type.pos.ADV;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.Constituent;
@@ -65,6 +60,7 @@ public class FocusGenerator extends JCasAnnotator_ImplBase {
 		return null;
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		for (ROOT sentence : JCasUtil.select(jcas, ROOT.class)) {
 			processSentence(jcas, sentence);

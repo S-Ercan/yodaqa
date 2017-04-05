@@ -1,6 +1,7 @@
 package cz.brmlab.yodaqa.analysis.question;
 
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
+import cz.brmlab.yodaqa.model.TyCor.ConfirmationQuestionLAT;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -16,6 +17,7 @@ import cz.brmlab.yodaqa.model.TyCor.QuestionWordLAT;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.model.alpino.type.dependency.WHD;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
 /**
  * Generate LAT annotations in a QuestionCAS. These are words that should be type-coercable to the
@@ -41,17 +43,21 @@ public class LATByQuestionWord extends JCasAnnotator_ImplBase {
 		}
 		if (!isWHQuestion) {
 			for (SV1 sv1 : JCasUtil.select(jcas, SV1.class)) {
-				addSV1LAT(jcas, sv1);
+				String sv1Type = "";
+				for (Token token : JCasUtil.selectCovered(Token.class, sv1)) {
+					if (token.getLemma().getValue().equals("kunnen")) {
+						sv1Type = "capability";
+					}
+				}
+				addSV1LAT(jcas, sv1, sv1Type);
 			}
 		}
 	}
 
-	protected void addSV1LAT(JCas jcas, SV1 sv1) {
-//		if (sv1.getBegin() == 0) {
-			QuestionDashboard.getInstance().setIsConfirmationQuestion(true);
-			addLAT(new QuestionWordLAT(jcas), sv1.getBegin(), sv1.getEnd(), sv1, "confirmation",
-					null, 1, 0.0);
-//		}
+	protected void addSV1LAT(JCas jcas, SV1 sv1, String sv1Type) {
+		QuestionDashboard.getInstance().setIsConfirmationQuestion(true);
+		addLAT(new ConfirmationQuestionLAT(jcas), sv1.getBegin(), sv1.getEnd(), sv1, sv1Type, null,
+				1, 0.0);
 	}
 
 	/**

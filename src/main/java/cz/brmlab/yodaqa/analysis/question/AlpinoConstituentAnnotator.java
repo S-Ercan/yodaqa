@@ -131,8 +131,7 @@ public class AlpinoConstituentAnnotator {
 	}
 
 	public Constituent createConstituentAnnotation(JCas jCas, int aBegin, int aEnd,
-			String aConstituentType,
-			String aSyntacticFunction) {
+			String aConstituentType, String aSyntacticFunction) {
 		Type constType;
 		if (aConstituentType.equals("top")) {
 			constType = jCas.getTypeSystem().getType(ROOT.class.getName());

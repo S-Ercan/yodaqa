@@ -1,5 +1,7 @@
 package cz.brmlab.yodaqa.analysis.rdf;
 
+import cz.brmlab.yodaqa.model.TyCor.ConfirmationQuestionLAT;
+import cz.brmlab.yodaqa.model.TyCor.LAT;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.provider.rdf.PropertyValue;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -91,10 +93,12 @@ public class DutchWordnetPropertyScorer {
 
 		String prop = null;
 		try {
-			JCasUtil.selectSingle(questionView, SV1.class);
-			// TODO: also for cases other than capabilities
-			if (pv.getProperty().equals("vaardigheid")) {
-				prop = pv.getValue();
+			for (ConfirmationQuestionLAT l : JCasUtil.select(questionView,
+					ConfirmationQuestionLAT.class)) {
+				// TODO: also for cases other than capabilities
+				if (l.getText().equals("capability") && pv.getProperty().equals("vaardigheid")) {
+					prop = pv.getValue();
+				}
 			}
 		} catch (IllegalArgumentException ex) {
 		}

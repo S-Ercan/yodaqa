@@ -39,6 +39,7 @@ public class LATByFocus extends JCasAnnotator_ImplBase {
 		super.initialize(aContext);
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		/* A Focus is also an LAT. */
 		for (Focus focus : JCasUtil.select(jcas, Focus.class)) {
