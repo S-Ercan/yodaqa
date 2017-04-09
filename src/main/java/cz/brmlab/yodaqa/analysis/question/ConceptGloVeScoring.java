@@ -14,42 +14,51 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
 /**
- * Counts probability of concept being relevant to the given question.
- * More info can be found at https://github.com/brmson/Sentence-selection,
- * we use the "property" mode.
+ * Counts probability of concept being relevant to the given question. More info can be found at
+ * https://github.com/brmson/Sentence-selection, we use the "property" mode.
  *
  * XXX: Method duplication with PropertyGloVeScoring.
  */
 public class ConceptGloVeScoring {
 
 	private static ConceptGloVeScoring cgs = new ConceptGloVeScoring();
+	private final boolean useGloVeScoring = false;
+
+	private ConceptGloVeScoring() {
+		if (useGloVeScoring) {
+			r = new Relatedness(new MbWeights(ConceptGloVeScoring.class.
+					getResourceAsStream("Mbdesc.txt")));
+		}
+	}
 
 	public static ConceptGloVeScoring getInstance() {
 		return cgs;
 	}
 
-	private Relatedness r = new Relatedness(new MbWeights(ConceptGloVeScoring.class.getResourceAsStream("Mbdesc.txt")));
+	private Relatedness r;
 
 	public double relatedness(List<String> qtoks, List<String> dtoks) {
 		return r.probability(qtoks, dtoks);
 	}
 
-	/** For legacy reasons, we use our own tokenization.
-	 * We also lower-case while at it, and might do some other
-	 * normalization steps...
-	 * XXX: Rely on pipeline instead? */
+	/**
+	 * For legacy reasons, we use our own tokenization. We also lower-case while at it, and might do
+	 * some other normalization steps... XXX: Rely on pipeline instead?
+	 */
 	public static List<String> tokenize(String str) {
 		return new ArrayList<>(Arrays.asList(str.toLowerCase().split("[\\p{Punct}\\s]+")));
 	}
 
-	/** Generate bag-of-words representation for the question.
-	 * We may not include *all* words in this representation
-	 * and use a more sophisticated strategy than tokenize(). */
+	/**
+	 * Generate bag-of-words representation for the question. We may not include *all* words in this
+	 * representation and use a more sophisticated strategy than tokenize().
+	 */
 	public static List<String> questionRepr(JCas questionView) {
 		List<String> tokens = new ArrayList<>();
 		for (LAT lat : JCasUtil.select(questionView, LAT.class)) {
-			if (lat instanceof WordnetLAT)
+			if (lat instanceof WordnetLAT) {
 				continue; // junk
+			}
 			tokens.add(lat.getText());
 		}
 		for (SV sv : JCasUtil.select(questionView, SV.class)) {

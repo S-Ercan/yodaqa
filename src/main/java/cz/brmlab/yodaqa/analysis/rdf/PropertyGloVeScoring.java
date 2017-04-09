@@ -14,41 +14,51 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
 /**
- * Counts probability of property containing a correct answer to given question.
- * More info can be found at https://github.com/brmson/Sentence-selection
+ * Counts probability of property containing a correct answer to given question. More info can be
+ * found at https://github.com/brmson/Sentence-selection
  *
  * XXX: Method duplication with PropertyGloVeScoring.
  */
 public class PropertyGloVeScoring {
 
 	private static PropertyGloVeScoring pgs = new PropertyGloVeScoring();
+	private boolean useGloVeScoring = false;
+
+	private PropertyGloVeScoring() {
+		if (useGloVeScoring) {
+			r = new Relatedness(new MbWeights(PropertyGloVeScoring.class.getResourceAsStream(
+					"Mbprop.txt")));
+		}
+	}
 
 	public static PropertyGloVeScoring getInstance() {
 		return pgs;
 	}
 
-	private Relatedness r = new Relatedness(new MbWeights(PropertyGloVeScoring.class.getResourceAsStream("Mbprop.txt")));
+	private Relatedness r;
 
 	public double relatedness(List<String> qtoks, List<String> ptoks) {
 		return r.probability(qtoks, ptoks);
 	}
 
-	/** For legacy reasons, we use our own tokenization.
-	 * We also lower-case while at it, and might do some other
-	 * normalization steps...
-	 * XXX: Rely on pipeline instead? */
+	/**
+	 * For legacy reasons, we use our own tokenization. We also lower-case while at it, and might do
+	 * some other normalization steps... XXX: Rely on pipeline instead?
+	 */
 	public static List<String> tokenize(String str) {
 		return new ArrayList<>(Arrays.asList(str.toLowerCase().split("[\\p{Punct}\\s]+")));
 	}
 
-	/** Generate bag-of-words representation for the question.
-	 * We may not include *all* words in this representation
-	 * and use a more sophisticated strategy than tokenize(). */
+	/**
+	 * Generate bag-of-words representation for the question. We may not include *all* words in this
+	 * representation and use a more sophisticated strategy than tokenize().
+	 */
 	public static List<String> questionRepr(JCas questionView) {
 		List<String> tokens = new ArrayList<>();
 		for (LAT lat : JCasUtil.select(questionView, LAT.class)) {
-			if (lat instanceof WordnetLAT)
+			if (lat instanceof WordnetLAT) {
 				continue; // junk
+			}
 			tokens.add(lat.getText());
 		}
 		for (SV sv : JCasUtil.select(questionView, SV.class)) {
