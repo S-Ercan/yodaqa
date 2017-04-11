@@ -67,9 +67,8 @@ public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 			neBonus = 1;
 		}
 
-		if (isConfirmationQuestion && fv.isFeatureSet(AF.PropertyScore) && fv.getFeatureValue(
-				AF.PropertyScore) > 3) {
-			return 1;
+		if (fv.isFeatureSet(AF.PropertyScore)) {
+			return fv.getFeatureValue(AF.PropertyScore);
 		}
 
 		double score = specificity
@@ -102,18 +101,18 @@ public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 			as.a.removeFromIndexes();
 
 			/* If we used this as true scorer... */
-			// as.a.setConfidence(as.score);
+			as.a.setConfidence(as.score);
 
 			/* ...but instead we just add it as an extra feature
 			 * for a more complex scorer. */
-			AnswerFV fv = new AnswerFV(as.a);
-			fv.setFeature(AF.SimpleScore, as.score);
-
-			for (FeatureStructure af : as.a.getFeatures().toArray()) {
-				((AnswerFeature) af).removeFromIndexes();
-			}
-			as.a.setFeatures(fv.toFSArray(jcas));
-			as.a.setConfidence(as.score);
+//			AnswerFV fv = new AnswerFV(as.a);
+//			fv.setFeature(AF.SimpleScore, as.score);
+//
+//			for (FeatureStructure af : as.a.getFeatures().toArray()) {
+//				((AnswerFeature) af).removeFromIndexes();
+//			}
+//			as.a.setFeatures(fv.toFSArray(jcas));
+//			as.a.setConfidence(as.score);
 			as.a.addToIndexes();
 		}
 	}

@@ -24,7 +24,7 @@ import cz.brmlab.yodaqa.model.Question.QuestionInfo;
  */
 public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 
-	private final boolean onlyPrintTopAnswer = true;
+	private final boolean onlyPrintTopAnswer = false;
 
 	@Override
 	public void initialize(UimaContext context)
@@ -55,7 +55,7 @@ public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 			int i = 1;
 			if (QuestionDashboard.getInstance().getIsConfirmationQuestion()) {
 				Answer answer = (Answer) answers.next();
-				if (answer.getConfidence() > 0.8) {
+				if (answer.getConfidence() > 2) {
 					System.out.println("Ja");
 				} else {
 					System.out.println("Nee");
