@@ -69,6 +69,13 @@ public class DutchWordnetPropertyScorer {
 		synonyms.put(text.toLowerCase(), 2.0);
 	}
 
+	public Double getSimilarityScore(String text1, String text2) {
+		if (text1.equals(text2)) {
+			return maxScore;
+		}
+		return WordSim.getWordSimLC(wordnetData, text1, text2);
+	}
+
 	protected Double getPropTextScore(String prop) {
 		double maxSimilarityScore = 0.0;
 		double similarityScore;

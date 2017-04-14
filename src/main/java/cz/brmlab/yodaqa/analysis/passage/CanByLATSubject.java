@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import cz.brmlab.yodaqa.analysis.ansscore.AnswerFV;
 import cz.brmlab.yodaqa.analysis.TreeUtil;
 import cz.brmlab.yodaqa.analysis.ansscore.AF;
+import cz.brmlab.yodaqa.analysis.rdf.DutchWordnetPropertyScorer;
 import cz.brmlab.yodaqa.model.SearchResult.Passage;
 import cz.brmlab.yodaqa.model.SearchResult.ResultInfo;
 import cz.brmlab.yodaqa.model.TyCor.LAT;
@@ -51,6 +52,8 @@ import org.apache.uima.jcas.cas.TOP;
 
 public class CanByLATSubject extends CandidateGenerator {
 
+	DutchWordnetPropertyScorer propScorer;
+
 	public CanByLATSubject() {
 		logger = LoggerFactory.getLogger(CanByLATSubject.class);
 	}
@@ -58,6 +61,9 @@ public class CanByLATSubject extends CandidateGenerator {
 	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
+		if (propScorer == null) {
+			propScorer = DutchWordnetPropertyScorer.getDutchWordnetPropertyScorer();
+		}
 	}
 
 	@Override
@@ -72,13 +78,17 @@ public class CanByLATSubject extends CandidateGenerator {
 		}
 
 		ResultInfo ri = JCasUtil.selectSingle(resultView, ResultInfo.class);
+		String predicate = null;
+		for (SU subj : JCasUtil.select(questionView, SU.class)) {
+			predicate = subj.getGovernor().getCoveredText();
+		}
 		for (SU subj : JCasUtil.select(passagesView, SU.class)) {
-			processSubject(questionView, passagesView, ri, subj);
+			processSubject(questionView, passagesView, ri, subj, predicate);
 		}
 	}
 
 	protected void processSubject(JCas questionView, JCas passagesView, ResultInfo ri,
-			Dependency nsubj) throws AnalysisEngineProcessException {
+			Dependency nsubj, String predicate) throws AnalysisEngineProcessException {
 		Passage passage = JCasUtil.selectCovering(Passage.class, nsubj).get(0);
 		String subjlemma = nsubj.getDependent().getLemma().getValue().toLowerCase();
 
@@ -106,109 +116,122 @@ public class CanByLATSubject extends CandidateGenerator {
 				logger.debug("Passage subject {} matches question lat {}", subjlemma, latlemma);
 
 				Annotation governor = TreeUtil.widestCoveringNP(nsubj.getGovernor());
-				Annotation base = null;
 				if (governor == null) {
-					governor = nsubj.getGovernor(); // cheat :)
+					governor = nsubj.getGovernor();
 				}
+
 				if (governor instanceof Token) {
 					String pos = ((Token) governor).getPos().getPosValue();
-					if (questionLat != null && (pos.matches("^v.*") || pos.matches("^V.*"))) {
-						String text = questionLat.getText();
-						// TODO: also handle the reverse case (i.e., for depObj.getGovernor())
-						switch (text) {
-							case "location":
-								for (LD depObj : JCasUtil.selectCovered(LD.class, passage)) {
-									// TODO: for this and all subsequent similar checks, requiring
-									// a high WordNet score instead of an exact match is a better
-									// approach
-									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-										base = TreeUtil.widestCoveringSubphrase(depObj.
-												getDependent());
-									}
-								}
-								break;
-							case "amount":
-								for (ME depObj : JCasUtil.selectCovered(ME.class, passage)) {
-									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-										base = TreeUtil.widestCoveringSubphrase(depObj.
-												getDependent());
-									}
-								}
-								break;
-							case "person":
-								for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-										base = TreeUtil.widestCoveringSubphrase(depObj.
-												getDependent());
-									}
-								}
-								break;
-							case "purpose":
-								for (MOD depObj : JCasUtil.selectCovered(MOD.class, passage)) {
-									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-										base = TreeUtil.widestCoveringSubphrase(depObj.
-												getDependent());
-									}
-								}
-								for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
-									if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-										base = TreeUtil.widestCoveringSubphrase(depObj.
-												getDependent());
-									}
-								}
-								break;
-							default:
-								break;
+					if (pos.matches("^v.*") || pos.matches("^V.*")) {
+						followPredicate(passagesView, passage, ri, predicate);
+						if (questionLat != null) {
+							searchForCandidates(passagesView, passage, questionLat, ri, nsubj);
 						}
 					}
-					for (TOP anno : JCasUtil.selectAll(passagesView)) {
-						String annoText = anno.toString();
-//						System.out.println(annoText);
-					}
-					if (base == null) {
-						for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
-							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-							}
-						}
-					}
-					if (base == null) {
-						for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
-							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-							}
-						}
-					}
-					if (base == null) {
-						for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, passage)) {
-							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-							}
-						}
-					}
-					if (base == null) {
-						for (OBJ2 depObj : JCasUtil.selectCovered(OBJ2.class, passage)) {
-							if (depObj.getGovernor().equals(nsubj.getGovernor())) {
-								base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
-							}
-						}
-					}
-//					if (base == null) {
-//						continue;
-//					}
 				}
-				if (base == null) {
-//						logger.debug("Ignoring verb governor {} {}", pos, base.getCoveredText());
-					continue;
-				}
-
-				AnswerFV fv = new AnswerFV(ri.getAnsfeatures());
-				fv.merge(new AnswerFV(passage.getAnsfeatures()));
-				/* This is both origin and tycor feature, essentially. */
-				fv.setFeature(AF.OriginPsgNPByLATSubj, 1.0);
-
-				addCandidateAnswer(passagesView, passage, base, fv);
 			}
 		}
+	}
+
+	private void followPredicate(JCas passagesView, Passage passage, ResultInfo ri,
+			String predicate) throws AnalysisEngineProcessException {
+
+		Annotation base = null;
+		for (Dependency d : JCasUtil.selectCovered(Dependency.class, passage)) {
+			if (predicate.equals(d.getGovernor().getCoveredText())
+					&& !d.getDependencyType().equals("su")) {
+				base = TreeUtil.widestCoveringSubphrase(d.getDependent());
+			}
+		}
+
+		if (base == null) {
+			return;
+		}
+
+		AnswerFV fv = new AnswerFV(ri.getAnsfeatures());
+		fv.merge(new AnswerFV(passage.getAnsfeatures()));
+		/* This is both origin and tycor feature, essentially. */
+		fv.setFeature(AF.OriginPsgNPByLATSubj, 1.0);
+
+		addCandidateAnswer(passagesView, passage, base, fv);
+	}
+
+	private void searchForCandidates(JCas passagesView, Passage passage, LAT questionLat,
+			ResultInfo ri, Dependency nsubj) throws AnalysisEngineProcessException {
+		Annotation base = null;
+		Dependency dep = null;
+		String text = questionLat.getText();
+		// TODO: also handle the reverse case (i.e., for depObj.getGovernor())
+		switch (text) {
+			case "location":
+				for (LD depObj : JCasUtil.selectCovered(LD.class, passage)) {
+					base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+					dep = depObj;
+				}
+				break;
+			case "amount":
+				for (ME depObj : JCasUtil.selectCovered(ME.class, passage)) {
+					base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+					dep = depObj;
+				}
+				break;
+			case "person":
+				for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
+					base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+					dep = depObj;
+				}
+				break;
+			case "purpose":
+				for (MOD depObj : JCasUtil.selectCovered(MOD.class, passage)) {
+					base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+					dep = depObj;
+				}
+				for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
+					base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+					dep = depObj;
+				}
+				break;
+			default:
+				break;
+		}
+		if (base == null) {
+			for (PREDC depObj : JCasUtil.selectCovered(PREDC.class, passage)) {
+				base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+				dep = depObj;
+			}
+		}
+		if (base == null) {
+			for (PC depObj : JCasUtil.selectCovered(PC.class, passage)) {
+				base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+				dep = depObj;
+			}
+		}
+		if (base == null) {
+			for (OBJ1 depObj : JCasUtil.selectCovered(OBJ1.class, passage)) {
+				base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+				dep = depObj;
+			}
+		}
+		if (base == null) {
+			for (OBJ2 depObj : JCasUtil.selectCovered(OBJ2.class, passage)) {
+				base = TreeUtil.widestCoveringSubphrase(depObj.getDependent());
+				dep = depObj;
+			}
+		}
+
+		if (base == null) {
+			return;
+		}
+
+		Double wordNetScore = propScorer.getSimilarityScore(dep.getGovernor().getCoveredText(),
+				nsubj.getGovernor().getCoveredText());
+
+		AnswerFV fv = new AnswerFV(ri.getAnsfeatures());
+		fv.merge(new AnswerFV(passage.getAnsfeatures()));
+		/* This is both origin and tycor feature, essentially. */
+		fv.setFeature(AF.OriginPsgNPByLATSubj, 1.0);
+		fv.setFeature(AF.LATSubjPredicateMatch, wordNetScore);
+
+		addCandidateAnswer(passagesView, passage, base, fv);
 	}
 }

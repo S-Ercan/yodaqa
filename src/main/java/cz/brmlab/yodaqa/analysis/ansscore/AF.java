@@ -67,6 +67,7 @@ public class AF {
 	 * question LAT. ("What is critical mass of X?" ->
 	 * "Critical mass is ***") */
 	public static final String OriginPsgNPByLATSubj = "originPsgNPByLATSubj";
+	public static final String LATSubjPredicateMatch = "LATSubjPredicateMatch";
 	/** Answer Feature: 1 if the origin of this answer is a mention
 	 * detected by a B-I-O tagger */
 	public static final String OriginPsgBIO = "originPsgBIO";

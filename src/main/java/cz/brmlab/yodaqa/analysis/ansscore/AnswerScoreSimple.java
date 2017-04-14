@@ -67,15 +67,21 @@ public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 			neBonus = 1;
 		}
 
-		if (fv.isFeatureSet(AF.PropertyScore)) {
-			return fv.getFeatureValue(AF.PropertyScore);
-		}
-
 		double score = specificity
 				* Math.exp(neBonus)
 				* fv.getFeatureValue(AF.Occurences)
 				* passageLogScore
 				* fv.getFeatureValue(AF.ResultLogScore);
+
+		if (fv.isFeatureSet(AF.PropertyScore)) {
+			return fv.getFeatureValue(AF.PropertyScore);
+		}
+		if (fv.isFeatureSet(AF.OriginPsgNPByLATSubj)) {
+			score += 1;
+			if (fv.isFeatureSet(AF.LATSubjPredicateMatch)) {
+				score += fv.getFeatureValue(AF.LATSubjPredicateMatch);
+			}
+		}
 		return score;
 	}
 
