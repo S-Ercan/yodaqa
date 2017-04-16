@@ -105,7 +105,7 @@ public class SolrFullAnswerProducer /* XXX: extends AggregateBuilder ? */ {
 				SolrFullPrimarySearch.class,
 				SolrFullPrimarySearch.PARAM_RESULT_INFO_ORIGIN,
 				"cz.brmlab.yodaqa.pipeline.solrfull.fulltext",
-				SolrFullPrimarySearch.PARAM_HITLIST_SIZE, 6);
+				SolrFullPrimarySearch.PARAM_HITLIST_SIZE, 5);
 		builder.add(primarySearch);
 		AnalysisEngineDescription passageExtractor = PassageExtractorAE.createEngineDescription(
 				PassageExtractorAE.PARAM_PASS_SEL_BYCLUE);

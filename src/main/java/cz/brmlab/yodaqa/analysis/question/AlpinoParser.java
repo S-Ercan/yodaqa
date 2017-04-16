@@ -86,12 +86,6 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 		depAnnotator.processDependencyTriples(aJCas, tokenList, dependencyOutput);
 	}
 
-	private String getSentenceFromTokens() {
-		String sentence = "";
-		
-		return sentence;
-	}
-	
 	private String getParseOutput(String sentence) {
 		Socket parseSocket = null;
 		PrintWriter parseOut = null;
