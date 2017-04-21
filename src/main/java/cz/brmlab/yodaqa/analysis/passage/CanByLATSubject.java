@@ -78,17 +78,20 @@ public class CanByLATSubject extends CandidateGenerator {
 		}
 
 		ResultInfo ri = JCasUtil.selectSingle(resultView, ResultInfo.class);
+		String subject = null;
 		String predicate = null;
 		for (SU subj : JCasUtil.select(questionView, SU.class)) {
+			subject = subj.getDependent().getCoveredText();
 			predicate = subj.getGovernor().getCoveredText();
 		}
 		for (SU subj : JCasUtil.select(passagesView, SU.class)) {
-			processSubject(questionView, passagesView, ri, subj, predicate);
+			processSubject(questionView, passagesView, ri, subj, subject, predicate);
 		}
 	}
 
 	protected void processSubject(JCas questionView, JCas passagesView, ResultInfo ri,
-			Dependency nsubj, String predicate) throws AnalysisEngineProcessException {
+			Dependency nsubj, String subject, String predicate)
+			throws AnalysisEngineProcessException {
 		Passage passage = JCasUtil.selectCovering(Passage.class, nsubj).get(0);
 		String subjlemma = nsubj.getDependent().getLemma().getValue().toLowerCase();
 
@@ -123,10 +126,8 @@ public class CanByLATSubject extends CandidateGenerator {
 				if (governor instanceof Token) {
 					String pos = ((Token) governor).getPos().getPosValue();
 					if (pos.matches("^v.*") || pos.matches("^V.*")) {
-						followPredicate(passagesView, passage, ri, predicate);
-						if (questionLat != null) {
-							searchForCandidates(passagesView, passage, questionLat, ri, nsubj);
-						}
+						followPredicate(passagesView, passage, ri, subject, predicate);
+						searchForCandidates(passagesView, passage, questionLat, ri, predicate);
 					}
 				}
 			}
@@ -134,33 +135,47 @@ public class CanByLATSubject extends CandidateGenerator {
 	}
 
 	private void followPredicate(JCas passagesView, Passage passage, ResultInfo ri,
-			String predicate) throws AnalysisEngineProcessException {
+			String subject, String predicate) throws AnalysisEngineProcessException {
 
 		Annotation base = null;
+		Annotation candidateBase = null;
+		boolean subjectMatches = false;
 		for (Dependency d : JCasUtil.selectCovered(Dependency.class, passage)) {
+			if (subject.equals(d.getDependent().getCoveredText())
+					&& d.getDependencyType().equals("su")) {
+				subjectMatches = true;
+			}
 			if (predicate.equals(d.getGovernor().getCoveredText())
 					&& !d.getDependencyType().equals("su")) {
-				base = TreeUtil.widestCoveringSubphrase(d.getDependent());
+				candidateBase = TreeUtil.widestCoveringSubphrase(d.getDependent());
 			}
 		}
 
+		if (subjectMatches && candidateBase != null) {
+			base = candidateBase;
+		}
 		if (base == null) {
 			return;
 		}
 
 		AnswerFV fv = new AnswerFV(ri.getAnsfeatures());
 		fv.merge(new AnswerFV(passage.getAnsfeatures()));
-		/* This is both origin and tycor feature, essentially. */
 		fv.setFeature(AF.OriginPsgNPByLATSubj, 1.0);
+		fv.setFeature(AF.LATSubjPredicateMatch, DutchWordnetPropertyScorer.MAX_SCORE);
 
 		addCandidateAnswer(passagesView, passage, base, fv);
 	}
 
 	private void searchForCandidates(JCas passagesView, Passage passage, LAT questionLat,
-			ResultInfo ri, Dependency nsubj) throws AnalysisEngineProcessException {
+			ResultInfo ri, String predicate) throws AnalysisEngineProcessException {
 		Annotation base = null;
 		Dependency dep = null;
-		String text = questionLat.getText();
+
+		String text = "";
+		if (questionLat != null) {
+			text = questionLat.getText();
+		}
+
 		// TODO: also handle the reverse case (i.e., for depObj.getGovernor())
 		switch (text) {
 			case "location":
@@ -224,7 +239,7 @@ public class CanByLATSubject extends CandidateGenerator {
 		}
 
 		Double wordNetScore = propScorer.getSimilarityScore(dep.getGovernor().getCoveredText(),
-				nsubj.getGovernor().getCoveredText());
+				predicate);
 
 		AnswerFV fv = new AnswerFV(ri.getAnsfeatures());
 		fv.merge(new AnswerFV(passage.getAnsfeatures()));

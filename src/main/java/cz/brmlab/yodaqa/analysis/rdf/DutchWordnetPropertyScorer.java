@@ -29,9 +29,10 @@ import org.slf4j.LoggerFactory;
  */
 public class DutchWordnetPropertyScorer {
 
+	public static final double MAX_SCORE = 4.0;
+
 	private static DutchWordnetPropertyScorer propScorer;
 	private static WordnetData wordnetData;
-	private static final double maxScore = 4.0;
 
 	final Logger logger = LoggerFactory.getLogger(DutchWordnetPropertyScorer.class);
 
@@ -71,7 +72,7 @@ public class DutchWordnetPropertyScorer {
 
 	public Double getSimilarityScore(String text1, String text2) {
 		if (text1.equals(text2)) {
-			return maxScore;
+			return MAX_SCORE;
 		}
 		return WordSim.getWordSimLC(wordnetData, text1, text2);
 	}
@@ -81,7 +82,7 @@ public class DutchWordnetPropertyScorer {
 		double similarityScore;
 		for (String baseText : baseTexts) {
 			if (baseText.toLowerCase().equals(prop.toLowerCase())) {
-				return maxScore;
+				return MAX_SCORE;
 			}
 			similarityScore = WordSim.getWordSimLC(wordnetData, prop, baseText);
 			if (similarityScore > maxSimilarityScore) {
