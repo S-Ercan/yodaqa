@@ -4,6 +4,7 @@ import cz.brmlab.yodaqa.model.TyCor.ConfirmationQuestionLAT;
 import cz.brmlab.yodaqa.model.TyCor.LAT;
 import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
 import cz.brmlab.yodaqa.provider.rdf.PropertyValue;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import vu.wntools.wnsimilarity.main.WordSim;
 import vu.wntools.wordnet.WordnetData;
@@ -96,7 +97,10 @@ public class DutchWordnetPropertyScorer {
 		baseTexts = new ArrayList<>();
 		synonyms = new HashMap<>();
 		for (Token token : JCasUtil.select(questionView, Token.class)) {
-			loadSynonyms(token.getLemma().getCoveredText());
+			Lemma lemma = token.getLemma();
+			if (lemma != null) {
+				loadSynonyms(token.getLemma().getCoveredText());
+			}
 		}
 
 		String prop = null;

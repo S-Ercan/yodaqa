@@ -13,18 +13,19 @@ import org.slf4j.LoggerFactory;
 import cz.brmlab.yodaqa.analysis.answer.SyntaxCanonization;
 import cz.brmlab.yodaqa.model.Question.Clue;
 import cz.brmlab.yodaqa.model.Question.ClueToken;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
 /**
- * Generate Clue annotations in a QuestionCAS. These represent key information
- * stored in the question that is then used in primary search.  E.g. "What was
- * the first book written by Terry Pratchett?" should generate clues "first",
- * "book", "first book", "write" and "Terry Pratchett".
+ * Generate Clue annotations in a QuestionCAS. These represent key information stored in the
+ * question that is then used in primary search. E.g. "What was the first book written by Terry
+ * Pratchett?" should generate clues "first", "book", "first book", "write" and "Terry Pratchett".
  *
- * This one creates clues from a bunch of POS-interesting tokens (like nouns,
- * numbers, etc.) and also interesting constituents like noun phrases. */
-
+ * This one creates clues from a bunch of POS-interesting tokens (like nouns, numbers, etc.) and
+ * also interesting constituents like noun phrases.
+ */
 public class ClueByTokenConstituent extends JCasAnnotator_ImplBase {
+
 	final Logger logger = LoggerFactory.getLogger(ClueByTokenConstituent.class);
 
 //	public static String TOKENMATCH = "CD|FW|JJ.*|NN.*|RB.*|UH.*";
@@ -45,9 +46,12 @@ public class ClueByTokenConstituent extends JCasAnnotator_ImplBase {
 
 		/* This is a DFS over the Constituent tree. */
 		for (Token t : JCasUtil.select(jcas, Token.class)) {
-			if (t.getPos().getPosValue().matches(TOKENMATCH)) {
-				if (t.getEnd() - t.getBegin() > 1) // skip one-letter things like interpunction
+			POS pos = t.getPos();
+			if (pos != null && t.getPos().getPosValue().matches(TOKENMATCH)) {
+				// skip one-letter things like interpunction
+				if (t.getEnd() - t.getBegin() > 1) {
 					addClue(new ClueToken(jcas), t.getBegin(), t.getEnd(), t, true, 1.0);
+				}
 			}
 		}
 //		LinkedList<Constituent> lifo = new LinkedList<Constituent>();
@@ -86,7 +90,8 @@ public class ClueByTokenConstituent extends JCasAnnotator_ImplBase {
 //		}
 	}
 
-	protected void addClue(Clue clue, int begin, int end, Annotation base, boolean isReliable, double weight) {
+	protected void addClue(Clue clue, int begin, int end, Annotation base, boolean isReliable,
+			double weight) {
 		clue.setBegin(begin);
 		clue.setEnd(end);
 		clue.setBase(base);

@@ -72,7 +72,7 @@ public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 				* fv.getFeatureValue(AF.ResultLogScore);
 
 		if (fv.isFeatureSet(AF.PropertyScore)) {
-			return fv.getFeatureValue(AF.PropertyScore);
+			score += fv.getFeatureValue(AF.PropertyScore);
 		}
 		if (fv.isFeatureSet(AF.OriginPsgNPByLATSubj)) {
 			score += 1;
