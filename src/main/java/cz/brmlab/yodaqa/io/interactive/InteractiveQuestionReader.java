@@ -21,18 +21,17 @@ import cz.brmlab.yodaqa.flow.dashboard.Question;
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import cz.brmlab.yodaqa.model.Question.QuestionInfo;
 
-
 /**
- * A collection that talks to the user via stdin/stdout, allowing
- * them to ask questions.
+ * A collection that talks to the user via stdin/stdout, allowing them to ask questions.
  *
- * We would like to inhreit from dkpro's ResourceCollectionReaderBase,
- * but the "Resource" part is a problem here. */
-
+ * We would like to inhreit from dkpro's ResourceCollectionReaderBase, but the "Resource" part is a
+ * problem here.
+ */
 public class InteractiveQuestionReader extends CasCollectionReader_ImplBase {
+
 	/**
-	 * Name of optional configuration parameter that contains the language
-	 * of questions. This is mandatory as x-unspecified will break e.g. OpenNLP.
+	 * Name of optional configuration parameter that contains the language of questions. This is
+	 * mandatory as x-unspecified will break e.g. OpenNLP.
 	 */
 	public static final String PARAM_LANGUAGE = ComponentParameters.PARAM_LANGUAGE;
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
@@ -58,7 +57,8 @@ public class InteractiveQuestionReader extends CasCollectionReader_ImplBase {
 			System.out.println("(c) 2014  Petr Baudis, standing on the shoulders of giants");
 		}
 		try {
-			System.out.print("brmson.yodaqa> ");
+//			System.out.print("brmson.yodaqa> ");
+			System.out.print("Question> ");
 			System.out.flush();
 			input = br.readLine();
 		} catch (IOException io) {
@@ -69,8 +69,9 @@ public class InteractiveQuestionReader extends CasCollectionReader_ImplBase {
 
 	@Override
 	public boolean hasNext() throws CollectionException {
-		if (input == null)
+		if (input == null) {
 			acquireInput();
+		}
 		return input != null;
 	}
 
@@ -85,8 +86,9 @@ public class InteractiveQuestionReader extends CasCollectionReader_ImplBase {
 
 	@Override
 	public void getNext(CAS aCAS) throws CollectionException {
-		if (input == null)
+		if (input == null) {
 			acquireInput();
+		}
 
 		Question q = new Question(Integer.toString(index), input);
 		QuestionDashboard.getInstance().askQuestion(q);

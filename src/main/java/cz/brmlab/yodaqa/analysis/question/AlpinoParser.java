@@ -1,5 +1,6 @@
 package cz.brmlab.yodaqa.analysis.question;
 
+import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -62,7 +63,13 @@ public class AlpinoParser extends JCasAnnotator_ImplBase {
 				continue;
 			}
 			// Get parse tree and dependency triples
-			String parseOutput = getParseOutput(sentence);
+			QuestionDashboard qd = QuestionDashboard.getInstance();
+			String parseOutput = qd.getParseTreeForSentence(sentence);
+			if (parseOutput == null) {
+				parseOutput = getParseOutput(sentence);
+				qd.addParseTreeForSentence(sentence, parseOutput);
+			}
+
 			Document parseTree = processParseTree(parseOutput);
 			if (parseTree == null) {
 				System.out.println(

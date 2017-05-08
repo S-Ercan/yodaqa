@@ -24,7 +24,7 @@ import cz.brmlab.yodaqa.model.Question.QuestionInfo;
  */
 public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 
-	private final boolean onlyPrintTopAnswer = false;
+	private final boolean onlyPrintTopAnswer = true;
 
 	@Override
 	public void initialize(UimaContext context)

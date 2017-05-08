@@ -18,10 +18,12 @@ import org.apache.uima.resource.ResourceInitializationException;
 
 
 public class PassSetup extends JCasAnnotator_ImplBase {
+	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
 	}
 
+	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		JCas resultView, passagesView;
 		try {

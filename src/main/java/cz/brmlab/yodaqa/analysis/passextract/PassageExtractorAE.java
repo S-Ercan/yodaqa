@@ -1,7 +1,5 @@
 package cz.brmlab.yodaqa.analysis.passextract;
 
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordSegmenter;
-
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.cas.CAS;
 import org.apache.uima.fit.factory.AggregateBuilder;

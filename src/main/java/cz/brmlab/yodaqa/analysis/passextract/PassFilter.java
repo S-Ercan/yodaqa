@@ -50,13 +50,14 @@ public class PassFilter extends JCasAnnotator_ImplBase {
      * data/ml/passextract-train.py num_picked variable.
      */
     public static final String PARAM_NUM_PICKED = "num-picked";
-    @ConfigurationParameter(name = PARAM_NUM_PICKED, mandatory = false, defaultValue = "3")
+    @ConfigurationParameter(name = PARAM_NUM_PICKED, mandatory = false, defaultValue = "2")
     private int numPicked;
-
-    public void initialize(UimaContext aContext) throws ResourceInitializationException {
+	@Override
+   public void initialize(UimaContext aContext) throws ResourceInitializationException {
         super.initialize(aContext);
     }
 
+	@Override
     public void process(JCas jcas) throws AnalysisEngineProcessException {
         JCas resultView, passagesView, pickedPassagesView, questionView;
         try {
