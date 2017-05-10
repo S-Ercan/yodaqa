@@ -140,7 +140,7 @@ public class AnswerScoreDecisionForest extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
-		if (QuestionDashboard.getInstance().getIsConfirmationQuestion()) {
+		if (QuestionDashboard.getInstance().isConfirmationQuestion()) {
 			return;
 		}
 		logger.debug("scoring with model {}", modelName);

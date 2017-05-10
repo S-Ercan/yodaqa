@@ -53,7 +53,7 @@ public class InteractiveAnswerPrinter extends JCasConsumer_ImplBase {
 	private void printResponse(FSIterator answers) {
 		if (answers.hasNext()) {
 			int i = 1;
-			if (QuestionDashboard.getInstance().getIsConfirmationQuestion()) {
+			if (QuestionDashboard.getInstance().isConfirmationQuestion()) {
 				Answer answer = (Answer) answers.next();
 				if (answer.getConfidence() > 2) {
 					System.out.println("Ja");

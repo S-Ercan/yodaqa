@@ -1,6 +1,7 @@
 package cz.brmlab.yodaqa.analysis.question;
 
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
+import cz.brmlab.yodaqa.model.Question.Subject;
 import cz.brmlab.yodaqa.model.TyCor.ConfirmationQuestionLAT;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
@@ -42,14 +43,23 @@ public class LATByQuestionWord extends JCasAnnotator_ImplBase {
 			isWHQuestion = true;
 		}
 		if (!isWHQuestion) {
-			for (SV1 sv1 : JCasUtil.select(jcas, SV1.class)) {
-				String sv1Type = "";
-				for (Token token : JCasUtil.selectCovered(Token.class, sv1)) {
-					if (token.getLemma().getValue().equals("kunnen")) {
-						sv1Type = "capability";
-					}
+			boolean subjectContainsNao = false;
+			for (Subject subject : JCasUtil.select(jcas, Subject.class)) {
+				if (subject.getCoveredText().toLowerCase().contains("nao")) {
+					subjectContainsNao = true;
+					break;
 				}
-				addSV1LAT(jcas, sv1, sv1Type);
+			}
+			if (subjectContainsNao) {
+				for (SV1 sv1 : JCasUtil.select(jcas, SV1.class)) {
+					String sv1Type = "";
+					for (Token token : JCasUtil.selectCovered(Token.class, sv1)) {
+						if (token.getLemma().getValue().equals("kunnen")) {
+							sv1Type = "capability";
+						}
+					}
+					addSV1LAT(jcas, sv1, sv1Type);
+				}
 			}
 		}
 	}

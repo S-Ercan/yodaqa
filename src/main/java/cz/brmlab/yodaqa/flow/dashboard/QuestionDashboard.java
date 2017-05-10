@@ -43,7 +43,7 @@ public final class QuestionDashboard {
 
 	private boolean isConfirmationQuestion;
 
-	public boolean getIsConfirmationQuestion() {
+	public boolean isConfirmationQuestion() {
 		return isConfirmationQuestion;
 	}
 

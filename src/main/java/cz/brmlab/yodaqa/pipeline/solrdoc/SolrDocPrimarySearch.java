@@ -5,11 +5,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import cz.brmlab.yodaqa.flow.dashboard.AnswerIDGenerator;
-import cz.brmlab.yodaqa.flow.dashboard.AnswerSource;
 import cz.brmlab.yodaqa.flow.dashboard.AnswerSourceEnwiki;
-import cz.brmlab.yodaqa.flow.dashboard.Question;
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
-import cz.brmlab.yodaqa.flow.dashboard.SourceIDGenerator;
 import cz.brmlab.yodaqa.flow.dashboard.snippet.AnsweringDocTitle;
 import cz.brmlab.yodaqa.flow.dashboard.snippet.SnippetIDGenerator;
 import org.apache.solr.common.SolrDocument;
@@ -41,27 +38,29 @@ import cz.brmlab.yodaqa.provider.solr.SolrQuerySettings;
 import cz.brmlab.yodaqa.provider.solr.SolrTerm;
 
 /**
- * From the QuestionCAS, generate a bunch of CandidateAnswerCAS
- * instances.  In this case, we submit an in-text Solr query
- * for "document search", looking for the most relevant documents
- * to the set of clues and creating CandidateAnswers from the
- * document titles. */
-
+ * From the QuestionCAS, generate a bunch of CandidateAnswerCAS instances. In this case, we submit
+ * an in-text Solr query for "document search", looking for the most relevant documents to the set
+ * of clues and creating CandidateAnswers from the document titles.
+ */
 public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
+
 	final Logger logger = LoggerFactory.getLogger(SolrDocPrimarySearch.class);
 
-	/** Number of results to grab and analyze. */
+	/**
+	 * Number of results to grab and analyze.
+	 */
 	public static final String PARAM_HITLIST_SIZE = "hitlist-size";
 //	@ConfigurationParameter(name = PARAM_HITLIST_SIZE, mandatory = false, defaultValue = "20")
 	@ConfigurationParameter(name = PARAM_HITLIST_SIZE, mandatory = false, defaultValue = "5")
 	protected int hitListSize;
 
-	/** Number and baseline distance of gradually desensitivized
-	 * proximity searches. Total of proximity-num optional search
-	 * terms are included, covering proximity-base-dist * #of terms
-	 * neighborhood. For each proximity term, the coverage is
-	 * successively multiplied by proximity-base-factor; initial weight
-	 * is sum of individual weights and is successively halved. */
+	/**
+	 * Number and baseline distance of gradually desensitivized proximity searches. Total of
+	 * proximity-num optional search terms are included, covering proximity-base-dist * #of terms
+	 * neighborhood. For each proximity term, the coverage is successively multiplied by
+	 * proximity-base-factor; initial weight is sum of individual weights and is successively
+	 * halved.
+	 */
 	public static final String PARAM_PROXIMITY_NUM = "proximity-num";
 	@ConfigurationParameter(name = PARAM_PROXIMITY_NUM, mandatory = false, defaultValue = "3")
 	protected int proximityNum;
@@ -69,7 +68,8 @@ public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
 	@ConfigurationParameter(name = PARAM_PROXIMITY_BASE_DIST, mandatory = false, defaultValue = "2")
 	protected int proximityBaseDist;
 	public static final String PARAM_PROXIMITY_BASE_FACTOR = "proximity-base-factor";
-	@ConfigurationParameter(name = PARAM_PROXIMITY_BASE_FACTOR, mandatory = false, defaultValue = "3")
+	@ConfigurationParameter(name = PARAM_PROXIMITY_BASE_FACTOR, mandatory = false, defaultValue
+			= "3")
 	protected int proximityBaseFactor;
 
 	protected SolrQuerySettings settings = null;
@@ -94,23 +94,26 @@ public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
 				new String[]{""}, true);
 	}
 
-
 	@Override
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		questionView = jcas;
 
 		SolrDocumentList documents;
-		try {
-			Collection<Clue> clues = JCasUtil.select(questionView, Clue.class);
-			Collection<SolrTerm> terms = SolrTerm.cluesToTerms(clues);
-			documents = solr.runQuery(terms, hitListSize, settings, logger);
-		} catch (Exception e) {
-			throw new AnalysisEngineProcessException(e);
+
+		if (QuestionDashboard.getInstance().isConfirmationQuestion()) {
+			documents = new SolrDocumentList();
+		} else {
+			try {
+				Collection<Clue> clues = JCasUtil.select(questionView, Clue.class);
+				Collection<SolrTerm> terms = SolrTerm.cluesToTerms(clues);
+				documents = solr.runQuery(terms, hitListSize, settings, logger);
+			} catch (Exception e) {
+				throw new AnalysisEngineProcessException(e);
+			}
 		}
 		docIter = documents.iterator();
 		i = 0;
 	}
-
 
 	@Override
 	public boolean hasNext() throws AnalysisEngineProcessException {
@@ -161,9 +164,11 @@ public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
 		jcas.setDocumentText(title.replaceAll("\\s+\\([^)]*\\)\\s*$", ""));
 		jcas.setDocumentLanguage("en"); // XXX
 
-		AnswerSourceEnwiki ac = new AnswerSourceEnwiki(AnswerSourceEnwiki.ORIGIN_DOCUMENT, (title != null ? title : ""), id);
+		AnswerSourceEnwiki ac = new AnswerSourceEnwiki(AnswerSourceEnwiki.ORIGIN_DOCUMENT,
+				(title != null ? title : ""), id);
 		int sourceID = QuestionDashboard.getInstance().get(questionView).storeAnswerSource(ac);
-		AnsweringDocTitle adt = new AnsweringDocTitle(SnippetIDGenerator.getInstance().generateID(), sourceID);
+		AnsweringDocTitle adt = new AnsweringDocTitle(SnippetIDGenerator.getInstance().generateID(),
+				sourceID);
 		QuestionDashboard.getInstance().get(questionView).addSnippet(adt);
 
 		ResultInfo ri = new ResultInfo(jcas);
@@ -197,7 +202,7 @@ public class SolrDocPrimarySearch extends JCasMultiplier_ImplBase {
 		ai.setSnippetIDs(new IntegerArray(jcas, 1));
 		ai.setSnippetIDs(0, adt.getSnippetID());
 		ai.setAnswerID(AnswerIDGenerator.getInstance().generateID());
- 		ai.addToIndexes();
+		ai.addToIndexes();
 	}
 
 	protected void dummyAnswer(JCas jcas, int isLast) throws Exception {
