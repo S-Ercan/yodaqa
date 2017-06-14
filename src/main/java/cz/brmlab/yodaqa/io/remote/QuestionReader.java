@@ -1,7 +1,5 @@
-package cz.brmlab.yodaqa.io.interactive;
+package cz.brmlab.yodaqa.io.remote;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
@@ -20,14 +18,17 @@ import org.apache.uima.util.ProgressImpl;
 import cz.brmlab.yodaqa.flow.dashboard.Question;
 import cz.brmlab.yodaqa.flow.dashboard.QuestionDashboard;
 import cz.brmlab.yodaqa.model.Question.QuestionInfo;
+import cz.brmlab.yodaqa.YodaQA_Remote;
+import cz.brmlab.yodaqa.pipeline.AnswerCASMerger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * A collection that talks to the user via stdin/stdout, allowing them to ask questions.
  *
- * We would like to inhreit from dkpro's ResourceCollectionReaderBase, but the "Resource" part is a
- * problem here.
  */
-public class InteractiveQuestionReader extends CasCollectionReader_ImplBase {
+public class QuestionReader extends CasCollectionReader_ImplBase {
+
+	final Logger logger = LoggerFactory.getLogger(QuestionReader.class);
 
 	/**
 	 * Name of optional configuration parameter that contains the language of questions. This is
@@ -37,32 +38,26 @@ public class InteractiveQuestionReader extends CasCollectionReader_ImplBase {
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
 	private String language;
 
-	BufferedReader br;
-
 	private int index;
 	private String input;
 
 	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
 		super.initialize(aContext);
-
 		index = -1;
-		br = new BufferedReader(new InputStreamReader(System.in));;
 	}
 
 	protected void acquireInput() {
 		index++;
-		if (index == 0) {
-			System.out.println("Brmson.YodaQA interactive question answerer");
-			System.out.println("(c) 2014  Petr Baudis, standing on the shoulders of giants");
-		}
+
 		try {
-//			System.out.print("brmson.yodaqa> ");
-			System.out.print("Question> ");
-			System.out.flush();
-			input = br.readLine();
+			String inputLine;
+			while ((inputLine = YodaQA_Remote.in.readLine()) != null) {
+				input = inputLine;
+				// Write question to logfile
+				break;
+			}
 		} catch (IOException io) {
-			io.printStackTrace();
 			input = null;
 		}
 	}

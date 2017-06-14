@@ -51,14 +51,15 @@ public class AlpinoConstituentAnnotator {
 		}
 
 		NamedNodeMap attrs = aNode.getAttributes();
-		Node beginNode, endNode, catNode, posNode, lemmaNode;
-		beginNode = endNode = catNode = posNode = lemmaNode = null;
+		Node beginNode, endNode, catNode, posNode, lemmaNode, cardNode;
+		beginNode = endNode = catNode = posNode = lemmaNode = cardNode = null;
 		if (attrs != null) {
 			beginNode = attrs.getNamedItem("begin");
 			endNode = attrs.getNamedItem("end");
 			catNode = attrs.getNamedItem("cat");
 			posNode = attrs.getNamedItem("pos");
 			lemmaNode = attrs.getNamedItem("lemma");
+			cardNode = attrs.getNamedItem("getal");
 		}
 
 		int firstTokenIndex = Integer.parseInt(beginNode.getNodeValue());

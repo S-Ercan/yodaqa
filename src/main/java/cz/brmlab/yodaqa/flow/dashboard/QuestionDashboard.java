@@ -24,6 +24,16 @@ public final class QuestionDashboard {
 	private static final QuestionDashboard qd = new QuestionDashboard();
 
 	private Map<String, String> parseTreeForSentence;
+	
+	private double startingTime;
+
+	public double getStartingTime() {
+		return startingTime;
+	}
+
+	public void setStartingTime(double startingTime) {
+		this.startingTime = startingTime;
+	}
 
 	private QuestionDashboard() {
 		parseTreeForSentence = new HashMap<>();

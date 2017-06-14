@@ -13,9 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.brmlab.yodaqa.model.AnswerHitlist.Answer;
-import cz.brmlab.yodaqa.model.alpino.type.constituent.SV1;
-import java.util.logging.Level;
-import org.apache.uima.cas.CASException;
 
 /**
  * Annotate the AnswerHitlistCAS Answer FSes with score based on the present AnswerFeatures. This
@@ -25,7 +22,6 @@ import org.apache.uima.cas.CASException;
 public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 
 	final Logger logger = LoggerFactory.getLogger(AnswerScoreSimple.class);
-	static boolean isConfirmationQuestion;
 
 	@Override
 	public void initialize(UimaContext aContext) throws ResourceInitializationException {
@@ -87,14 +83,6 @@ public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 	public void process(JCas jcas) throws AnalysisEngineProcessException {
 		List<AnswerScore> answers = new LinkedList<>();
 
-		try {
-			JCasUtil.select(jcas.getView("Question"), SV1.class);
-			isConfirmationQuestion = true;
-		} catch (CASException ex) {
-			java.util.logging.Logger.getLogger(AnswerScoreSimple.class.getName()).
-					log(Level.SEVERE, null, ex);
-		}
-
 		for (Answer a : JCasUtil.select(jcas, Answer.class)) {
 			double score = scoreAnswer(a);
 			answers.add(new AnswerScore(a, score));
@@ -103,20 +91,7 @@ public class AnswerScoreSimple extends JCasAnnotator_ImplBase {
 		/* Reindex the touched answer info(s). */
 		for (AnswerScore as : answers) {
 			as.a.removeFromIndexes();
-
-			/* If we used this as true scorer... */
 			as.a.setConfidence(as.score);
-
-			/* ...but instead we just add it as an extra feature
-			 * for a more complex scorer. */
-//			AnswerFV fv = new AnswerFV(as.a);
-//			fv.setFeature(AF.SimpleScore, as.score);
-//
-//			for (FeatureStructure af : as.a.getFeatures().toArray()) {
-//				((AnswerFeature) af).removeFromIndexes();
-//			}
-//			as.a.setFeatures(fv.toFSArray(jcas));
-//			as.a.setConfidence(as.score);
 			as.a.addToIndexes();
 		}
 	}
