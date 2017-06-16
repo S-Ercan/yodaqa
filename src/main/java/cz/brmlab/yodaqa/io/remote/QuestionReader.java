@@ -52,10 +52,10 @@ public class QuestionReader extends CasCollectionReader_ImplBase {
 
 		try {
 			String inputLine;
-			while ((inputLine = YodaQA_Remote.in.readLine()) != null) {
+			inputLine = YodaQA_Remote.in.readLine();
+			if (inputLine != null) {
 				input = inputLine;
-				// Write question to logfile
-				break;
+				// TODO: write question to logfile
 			}
 		} catch (IOException io) {
 			input = null;
