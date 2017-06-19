@@ -56,7 +56,11 @@ public class AnswerPrinter extends JCasConsumer_ImplBase {
 				}
 			} else {
 				Answer answer = (Answer) answers.next();
-				response = answer.getText();
+				if (answer.getConfidence() > 1) {
+					response = answer.getText().replace('\n', ' ').substring(200);
+				} else {
+					response = "NO_ANSWER";
+				}
 			}
 		} else {
 			response = "No answer found.";

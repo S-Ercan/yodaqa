@@ -55,7 +55,6 @@ public class QuestionReader extends CasCollectionReader_ImplBase {
 			inputLine = YodaQA_Remote.in.readLine();
 			if (inputLine != null) {
 				input = inputLine;
-				// TODO: write question to logfile
 			}
 		} catch (IOException io) {
 			input = null;
