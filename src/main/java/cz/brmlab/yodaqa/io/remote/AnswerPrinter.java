@@ -1,6 +1,8 @@
 package cz.brmlab.yodaqa.io.remote;
 
 import cz.brmlab.yodaqa.YodaQA_Remote;
+import cz.brmlab.yodaqa.analysis.passage.MatchQuestionClues;
+
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.FSIndex;
@@ -56,8 +58,9 @@ public class AnswerPrinter extends JCasConsumer_ImplBase {
 				}
 			} else {
 				Answer answer = (Answer) answers.next();
-				if (answer.getConfidence() > 1) {
-					response = answer.getText().replace('\n', ' ').substring(200);
+				if (answer.getConfidence() > 0.5) {
+					response = answer.getText().replace('\n', ' ');
+					response = response.substring(0, Math.min(response.length(), 200));
 				} else {
 					response = "NO_ANSWER";
 				}
